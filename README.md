@@ -66,10 +66,10 @@ Follow the prompts to set your username, email, and password.
 By default, the API will be available at `http://127.0.0.1:8000/api`.
 The Admin panel is at `http://127.0.0.1:8000/admin/`.
 
-## 🤝 Contributing
+## Contributing
 
 We welcome contributions! Please see `CONTRIBUTING.md` (coming soon) for details on how to submit pull requests, report issues, or request features.
 
-## 📄 License
+## License
 
 This project is licensed under the [GNU Affero General Public License v3.0 (AGPL-3.0)](LICENSE).
