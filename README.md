@@ -23,7 +23,7 @@ Follow these steps to set up the development environment locally.
 
 ### 1. Clone the Repository
 
-    git clone https://github.com/XXXX.git
+    git clone https://github.com/TripleZeroLabs/Ephany-Framework.git
     cd ephany-framework
 
 ### 2. Create a Virtual Environment
