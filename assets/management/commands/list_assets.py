@@ -3,25 +3,19 @@ from assets.models import Asset
 
 
 class Command(BaseCommand):
-    help = 'Lists all assets currently in the database'
+    help = 'Lists all assets'
 
     def handle(self, *args, **kwargs):
-        assets = Asset.objects.select_related('manufacturer').all()
-
-        if not assets.exists():
-            self.stdout.write(self.style.WARNING("No assets found in the database."))
-            return
-
-        self.stdout.write(f"Found {assets.count()} assets:\n")
-        self.stdout.write("-" * 80)
-        self.stdout.write(f"{'Asset ID':<20} | {'Manufacturer':<20} | {'Model':<20}")
-        self.stdout.write("-" * 80)
-
+        assets = Asset.objects.all()
         for asset in assets:
-            self.stdout.write(
-                f"{asset.unique_id:<20} | "
-                f"{asset.manufacturer.name:<20} | "
-                f"{asset.model:<20}"
-            )
-
-        self.stdout.write("-" * 80)
+            self.stdout.write(f"{asset.unique_id}: {asset.manufacturer.name} - {asset.model}")
+            
+            files = asset.files.all()
+            if files:
+                self.stdout.write("  Files:")
+                for f in files:
+                    self.stdout.write(f"    - [{f.get_category_display()}] {f.file.name}")
+            else:
+                self.stdout.write("  (No files attached)")
+            
+            self.stdout.write("-" * 40)

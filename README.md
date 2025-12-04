@@ -66,6 +66,17 @@ Follow the prompts to set your username, email, and password.
 By default, the API will be available at `http://127.0.0.1:8000/api`.
 The Admin panel is at `http://127.0.0.1:8000/admin/`.
 
+## Additional Notes
+
+### Media and File Uploads
+
+This project handles user-uploaded files (e.g., PDFs and Revit Families for Assets) in the `media/` directory.
+
+- **Development**: The project is configured to serve media files automatically when `DEBUG=True`.
+- **Git**: The `media/` directory is ignored by version control to prevent user data from being committed.
+- **Production**: When deploying, you must configure your web server (e.g., Nginx, Apache) or a storage service (e.g., AWS S3) to serve files from `MEDIA_ROOT`.
+
+
 ## Contributing
 
 We welcome contributions! Please see `CONTRIBUTING.md` (coming soon) for details on how to submit pull requests, report issues, or request features.
