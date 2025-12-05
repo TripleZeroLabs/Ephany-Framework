@@ -105,6 +105,7 @@ curl -X GET "http://127.0.0.1:8000/api/assets/?manufacturer__name__icontains=Son
 ]
 ```
 
+For executable Python scripts and more advanced usage, check out the [examples](./examples) folder.
 
 ## Additional Notes
 
