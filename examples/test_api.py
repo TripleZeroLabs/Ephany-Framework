@@ -35,6 +35,7 @@ if __name__ == "__main__":
     # make sure the server is running!
     try:
         get_assets()
+        # Uncomment the line below to create a new manufacturer
         # new_man = create_manufacturer("Example Corp")
     except requests.exceptions.ConnectionError:
         print("Could not connect to server. Is it running on port 8000?")
