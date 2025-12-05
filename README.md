@@ -66,6 +66,46 @@ Follow the prompts to set your username, email, and password.
 By default, the API will be available at `http://127.0.0.1:8000/api`.
 The Admin panel is at `http://127.0.0.1:8000/admin/`.
 
+## API Usage Example
+
+The framework exposes a powerful REST API. Here is an example of how to search for assets by **Manufacturer Name** using a standard HTTP GET request.
+
+### Request
+
+**Endpoint:** `GET /api/assets/`  
+**Filter:** `?manufacturer__name__icontains=Sony`
+
+```bash
+curl -X GET "http://127.0.0.1:8000/api/assets/?manufacturer__name__icontains=Sony" -H "Content-Type: application/json"
+```
+
+### Response
+
+```json
+[
+  {
+    "id": 1,
+    "unique_id": "A-001",
+    "manufacturer": 1,
+    "manufacturer_name": "Sony Corp",
+    "model": "Bravia X1",
+    "description": "55 inch 4K TV",
+    "url": "https://electronics.sony.com/tv",
+    "files": [
+      {
+        "id": 5,
+        "file": "/media/assets/files/manual.pdf",
+        "category": "PDS",
+        "category_display": "Cut Sheet",
+        "uploaded_at": "2023-10-27T14:30:00Z"
+      }
+    ],
+    "file_ids": [5]
+  }
+]
+```
+
+
 ## Additional Notes
 
 ### Media and File Uploads
