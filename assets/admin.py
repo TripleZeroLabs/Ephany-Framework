@@ -8,7 +8,7 @@ class AssetAdmin(admin.ModelAdmin):
     search_fields = ('unique_id', 'model', 'manufacturer__name')
     filter_horizontal = ('files',)
 
-
+@admin.register(AssetFile)
 class AssetFileAdmin(admin.ModelAdmin):
     list_display = ('file', 'category', 'uploaded_at')
     list_filter = ('category', 'uploaded_at')

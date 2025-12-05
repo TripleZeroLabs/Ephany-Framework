@@ -11,8 +11,8 @@ class Manufacturer(models.Model):
 class AssetFile(models.Model):
     class Category(models.TextChoices):
         CUT_SHEET = 'PDS', 'Cut Sheet'
-        CAD_FILE = 'CAD', 'CAD File'
-        REVIT_FAMILY = 'RVT', 'Revit Family'
+        CAD_FILE = 'DWG', 'CAD File'
+        REVIT_FAMILY = 'RFA', 'Revit Family'
         OTHER = 'OTH', 'Other'
 
     file = models.FileField(upload_to='assets/files/')
