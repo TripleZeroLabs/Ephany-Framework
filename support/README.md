@@ -12,10 +12,13 @@ Welcome to the developer documentation for the Ephany Framework. This guide cove
     *   [Assets & Attributes](#assets--attributes)
     *   [Projects & Snapshots](#projects--snapshots)
     *   [Users & Settings](#users--settings)
-2.  [**API Reference**](#2-api-endpoints)
+2.  [**Revit & BIM Integration**](#2-revit--bim-integration)
+    *   [Autodesk ForgeTypeId](#autodesk-forgetypeid-mapping)
+    *   [Future Roadmap](#future-roadmap-deep-parameter-integration)
+3.  [**API Reference**](#3-api-reference)
     *   [Authentication](#authentication)
     *   [Endpoints Overview](#endpoints-overview)
-3.  [**Cookbook (Sample Calls)**](#3-sample-api-calls)
+4.  [**Cookbook (Sample Calls)**](#4-sample-api-calls)
     *   [Creating a User](#creating-a-user)
     *   [Searching for Assets](#searching-for-assets)
     *   [Updating Custom Fields](#updating-custom-fields-unit-aware)
@@ -30,6 +33,14 @@ The framework is divided into three main domains:
 ### Assets & Attributes
 The core of the system. Assets represent physical objects (pumps, valves, furniture) that have standard dimensions and infinite custom properties.
 
+**Asset Attributes & Intelligent Units**
+The `AssetAttribute` model acts as a strict schema registry for the open-ended `custom_fields` JSON attached to every Asset. This allows the system to support **infinite custom fields** without requiring database schema migrations for every new property (e.g., `flange_rating`, `voltage`, `material_finish`).
+
+Crucially, this model powers Ephany's **Automatic Unit Conversion** engine:
+*   **Metric Storage (Single Source of Truth):** To maintain engineering integrity, Ephany stores all physical values in the database in **Base Metric Units** (Millimeters for length, Kilograms for mass, Square Meters for area).
+*   **User-Centric IO:** The API middleware intercepts all reads and writes. It checks the logged-in user's `UserSettings` to determine their preferred unit system (e.g., Imperial/Feet).
+*   **Seamless Conversion:** If a user (who prefers Inches) saves a `shelf_width` of `10`, the system converts and saves it as `254.0` (mm). When retrieved, it converts back to `10.0`.
+
 | Model | Description | Key Fields |
 | :--- | :--- | :--- |
 | **Asset** | A physical product or component. | `unique_id`, `model`, `manufacturer`, `height`, `width`, `depth`, `custom_fields` (JSON) |
@@ -40,10 +51,10 @@ The core of the system. Assets represent physical objects (pumps, valves, furnit
 ### Projects & Snapshots
 Used for tracking the usage or state of assets over time.
 
-| Model | Description | Key Fields |
-| :--- | :--- | :--- |
-| **Project** | A construction or design project. | `unique_id`, `name`, `description` |
-| **Snapshot** | A frozen state of a project at a specific date. | `project`, `name`, `date`, `data` (JSON) |
+| Model | Description | Key Fields                                 |
+| :--- | :--- |:-------------------------------------------|
+| **Project** | A construction or design project. | `unique_id`, `name`, `description`         |
+| **Snapshot** | A frozen state of a project at a specific date. | `project`, `name`, `date`, `assets` (JSON) |
 
 ### Users & Settings
 Handles authentication and user-specific preferences (like Unit Systems).
@@ -55,13 +66,31 @@ Handles authentication and user-specific preferences (like Unit Systems).
 
 ---
 
-<a name="2-api-endpoints"></a>
-## 2. API Endpoints
+<a name="2-revit--bim-integration"></a>
+## 2. Revit & BIM Integration
+
+Ephany is designed from the ground up for interoperability with Building Information Modeling (BIM) workflows.
+
+### Autodesk ForgeTypeId Mapping
+The unit types in `AssetAttribute` (e.g., `autodesk.spec.aec:length-2.0.0`) map directly to **Autodesk's ForgeTypeId schemas**. This ensures that data extracted from Ephany can be injected directly into Revit or Forge APIs without complicated mapping.
+*   [Autodesk ForgeTypeId Documentation](https://www.revitapidocs.com/2024/e895e206-7654-445f-27a7-669df676df21.htm)
+
+### Future Roadmap: Deep BIM Data Integration
+Upcoming releases will expand this mapping to include:
+*   **Revit Built-in Parameters:** Direct mapping to hardcoded standard Revit data. ([Docs](https://www.revitapidocs.com/2024/fb011c91-be7e-f737-28c7-3f1e1917a0e0.htm))
+*   **Shared Parameters:** Support for loading GUID-based Shared Parameter files (`.txt`) to sync definitions across projects. ([Docs](https://help.autodesk.com/view/RVT/2024/ENU/?guid=GUID-91270D94-D66A-4973-8AB6-CB697424992A))
+*   **IFC Property Sets:** Standardization for OpenBIM exports using IFC4/IFC2x3 Property Sets (`Pset_WallCommon`). ([buildingSMART IFC Documentation](https://standards.buildingsmart.org/IFC/RELEASE/IFC4/ADD2_TC1/HTML/))
+
+---
+
+<a name="3-api-reference"></a>
+## 3. API Reference
 
 The API is built with **Django Rest Framework**. All endpoints accept and return JSON.
 
 ### Authentication
 *   **Basic Auth:** Supports standard Username/Password (great for scripts).
+    *   Header: `Authorization: Basic <base64_credentials>`
 *   **Session Auth:** Uses cookies (great for browsers).
 
 ### Endpoints Overview
@@ -78,8 +107,8 @@ Base URL: `http://localhost:8000/api/`
 
 ---
 
-<a name="3-sample-api-calls"></a>
-## 3. Sample API Calls
+<a name="4-sample-api-calls"></a>
+## 4. Sample API Calls
 
 Examples using Python `requests`.
 
