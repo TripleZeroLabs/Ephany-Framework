@@ -19,14 +19,12 @@ This folder contains Python scripts demonstrating how to interact with the Ephan
 ## Available Scripts
 
 ### 1. test_api.py
-#### Connection Check
 A simple health check script. Use this first to ensure your API is online and reachable.
 ```bash
 python examples/test_api.py
 ```
 
 ### 2. users_workflows.py
-#### User & Settings Workflow
 Demonstrates the complete user lifecycle:
 - **Registering a new user** (with custom unit preferences).
 - **Authenticating** (Basic Auth).
@@ -39,7 +37,6 @@ python examples/users_workflows.py
 ```
 
 ### 3. assets_search.py
-#### Asset Search
 A command-line tool to search for assets and manufacturers using various filters.
 
 **Search by Asset ID:**
@@ -58,7 +55,6 @@ python examples/assets_search.py manufacturer "Sony Corp"
 ```
 
 ### 4. assets_custom_fields.py
-#### Unit Conversion CLI Tool
 An interactive command-line application that demonstrates the automatic unit conversion logic.
 
 **How it works:**
