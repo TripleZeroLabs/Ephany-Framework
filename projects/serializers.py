@@ -8,7 +8,7 @@ class SnapshotSerializer(serializers.ModelSerializer):
 
 class ProjectSerializer(serializers.ModelSerializer):
     # Optional: Include snapshots in the project detail
-    # snapshots = SnapshotSerializer(many=True, read_only=True)
+    snapshots = SnapshotSerializer(many=True, read_only=True)
 
     class Meta:
         model = Project

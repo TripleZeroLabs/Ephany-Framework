@@ -16,77 +16,98 @@ This folder contains Python scripts demonstrating how to interact with the Ephan
 
 ---
 
+## Available Scripts
+
+### 1. test_api.py
+#### Connection Check
+A simple health check script. Use this first to ensure your API is online and reachable.
+```bash
+python examples/test_api.py
+```
+
+### 2. users_workflows.py
+#### User & Settings Workflow
+Demonstrates the complete user lifecycle:
+- **Registering a new user** (with custom unit preferences).
+- **Authenticating** (Basic Auth).
+- **Updating Settings** (e.g., switching from Feet to Millimeters).
+- **Listing Users**.
+
+This is a great reference for how to handle authentication and nested JSON data in the API.
+```bash
+python examples/users_workflows.py
+```
+
+### 3. assets_search.py
+#### Asset Search
+A command-line tool to search for assets and manufacturers using various filters.
+
+**Search by Asset ID:**
+```bash
+python examples/assets_search.py id "A-001"
+```
+
+**Search by Manufacturer & Model:**
+```bash
+python examples/assets_search.py model "Sony" "X1"
+```
+
+**Search Manufacturer by Name:**
+```bash
+python examples/assets_search.py manufacturer "Sony Corp"
+```
+
+### 4. assets_custom_fields.py
+#### Unit Conversion CLI Tool
+An interactive command-line application that demonstrates the automatic unit conversion logic.
+
+**How it works:**
+1.  **Login:** It prompts you for a `Username` and `Password`.
+2.  **Context:** It fetches and displays your current unit preferences (e.g., "Inches").
+3.  **Asset Selection:** You enter the `Unique ID` of an asset you want to update.
+4.  **Update:** You enter a `Field Key` (e.g., `shelf_width`) and a `New Value` **in your preferred units** (e.g., 12.5 inches).
+5.  **Conversion:** The system automatically converts your input to Metric (mm) before saving to the database.
+6.  **Verification:** The tool reads the value back to confirm it matches your input, and calculates the internal metric value to prove the conversion happened.
+
+**Requirement:** You must define the custom field (e.g., `shelf_width`) as a `Length` attribute in the before running this.
+
+```bash
+python examples/assets_custom_fields.py
+```
+
+---
+
 ## How It Works (Code Breakdown)
 
 The core idea is simple: we send a "Request" to the server, and it sends back "Response" data in JSON format (which looks just like a Python dictionary).
 
-### 1. Searching for an Asset
-
-Here is how we find an asset by its unique ID. Notice how we pass the search term in a dictionary called `params`.
+### Fetching Data (`GET`)
+Here is how we find an asset by its unique ID.
 
 ```python
 import requests
 
-# The endpoint we are talking to
 url = "http://127.0.0.1:8000/api/assets/"
+params = {'unique_id__iexact': "A-001"} # Case-insensitive search
 
-# What we are looking for
-# 'iexact' means "insensitive exact", so "a-001" finds "A-001"
-params = {'unique_id__iexact': "A-001"}
-
-# Ask the server for the data
 response = requests.get(url, params=params)
 
-# If the server says "OK" (Status 200), get the JSON data
 if response.status_code == 200:
     data = response.json()
     print("Found Asset:", data)
 ```
 
-### 2. Creating Data
-
-To add something new, like a Manufacturer, we use `requests.post` instead of `get`.
+### Creating Data (`POST`)
+To add something new, like a User or Asset, we use `requests.post`.
 
 ```python
+import requests
+
 url = "http://127.0.0.1:8000/api/manufacturers/"
 new_data = {"name": "New Corp"}
 
-# Send the data to the server
 response = requests.post(url, json=new_data)
 
 if response.status_code == 201: # 201 means "Created"
     print("Success! Created manufacturer.")
-```
-
----
-
-## Running the Example Scripts
-
-We have included ready-to-run scripts for you.
-
-### `search_assets.py`
-
-A command-line tool to search for assets and manufacturers.
-
-**Search by Asset ID:**
-```bash
-python examples/search_assets.py id "A-001"
-```
-
-**Search by Manufacturer & Model:**
-```bash
-python examples/search_assets.py model "Sony" "X1"
-```
-
-**Search Manufacturer by Name:**
-```bash
-python examples/search_assets.py manufacturer "Sony Corp"
-```
-
-### `test_api.py`
-
-A simple script to fetch all assets at once.
-
-```bash
-python examples/test_api.py
 ```

@@ -1,41 +1,27 @@
 import requests
-import json
-from config import BASE_URL, HEADERS
+from config import BASE_URL
 
-
-def get_assets():
-    """Fetch and print all assets."""
-    print("--- Fetching Assets ---")
-    response = requests.get(f"{BASE_URL}/assets/")
-
-    if response.status_code == 200:
-        assets = response.json()
-        print(json.dumps(assets, indent=2))
-    else:
-        print(f"Error: {response.status_code}")
-        print(response.text)
-
-
-def create_manufacturer(name):
-    """Create a new manufacturer."""
-    print(f"\n--- Creating Manufacturer: {name} ---")
-    payload = {"name": name}
-    response = requests.post(f"{BASE_URL}/manufacturers/", json=payload, headers=HEADERS)
-
-    if response.status_code == 201:
-        print("Success!")
-        return response.json()
-    else:
-        print(f"Error: {response.status_code}")
-        print(response.text)
-        return None
-
+def check_connection():
+    """
+    Simple health check to see if the API is reachable.
+    We ping the API root endpoint.
+    """
+    print(f"Connecting to {BASE_URL}...")
+    
+    try:
+        response = requests.get(BASE_URL, timeout=5)
+        
+        if response.status_code == 200:
+            print(f"\n[SUCCESS] Connected to API!")
+            print(f"Status: {response.status_code} OK")
+            print("Server is online and responding.")
+        else:
+            print(f"\n[WARNING] Server responded with status code: {response.status_code}")
+            
+    except requests.exceptions.ConnectionError:
+        print("\n[ERROR] Could not connect to server.")
+        print("Is it running on port 8000?")
+        print("Try running: python manage.py runserver")
 
 if __name__ == "__main__":
-    # make sure the server is running!
-    try:
-        get_assets()
-        # Uncomment the line below to create a new manufacturer
-        # new_man = create_manufacturer("Example Corp")
-    except requests.exceptions.ConnectionError:
-        print("Could not connect to server. Is it running on port 8000?")
+    check_connection()
