@@ -14,7 +14,7 @@ class AssetFile(models.Model):
         CUT_SHEET = 'PDS', 'Cut Sheet'
         CAD_FILE = 'DWG', 'CAD File'
         REVIT_FAMILY = 'RFA', 'Revit Family'
-        OTHER = 'OTH', 'Other'
+        OTHER = 'ETC', 'Other'
 
     file = models.FileField(upload_to='assets/files/')
     category = models.CharField(
