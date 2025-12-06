@@ -53,7 +53,7 @@ Used for tracking the usage or state of assets over time.
 
 | Model | Description | Key Fields                                 |
 | :--- | :--- |:-------------------------------------------|
-| **Project** | A construction or design project. | `unique_id`, `name`, `description`         |
+| **Project** | A construction or design project. | `unique_id`, `name`, `description` |
 | **Snapshot** | A frozen state of a project at a specific date. | `project`, `name`, `date`, `assets` (JSON) |
 
 ### Users & Settings

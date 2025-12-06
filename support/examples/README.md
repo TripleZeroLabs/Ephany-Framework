@@ -58,12 +58,13 @@ python examples/assets_search.py manufacturer "Sony Corp"
 An interactive command-line application that demonstrates the automatic unit conversion logic.
 
 **How it works:**
-1.  **Login:** It prompts you for a `Username` and `Password`.
-2.  **Context:** It fetches and displays your current unit preferences (e.g., "Inches").
-3.  **Asset Selection:** You enter the `Unique ID` of an asset you want to update.
-4.  **Update:** You enter a `Field Key` (e.g., `shelf_width`) and a `New Value` **in your preferred units** (e.g., 12.5 inches).
-5.  **Conversion:** The system automatically converts your input to Metric (mm) before saving to the database.
-6.  **Verification:** The tool reads the value back to confirm it matches your input, and calculates the internal metric value to prove the conversion happened.
+1.  **Login:** It prompts you for a `Username` and `Password` (to establish authorized session).
+2.  **Asset Selection:** You enter the `Unique ID` of an asset you want to update.
+3.  **Update:** You enter a `Field Key` (e.g., `shelf_width`).
+4.  **Unit Selection:** You specify the unit for your input (e.g., `in`, `ft`, `mm`).
+5.  **Value Input:** You enter the new value in your chosen unit.
+6.  **Conversion:** The system receives your explicit unit type and automatically converts your input to Metric (mm) before saving to the database.
+7.  **Verification:** The tool reads the value back to confirm it matches your input, and calculates the internal metric value to prove the conversion happened.
 
 **Requirement:** You must define the custom field (e.g., `shelf_width`) as a `Length` attribute in the before running this.
 
@@ -106,4 +107,32 @@ response = requests.post(url, json=new_data)
 
 if response.status_code == 201: # 201 means "Created"
     print("Success! Created manufacturer.")
+```
+
+### Updating Custom Fields (Unit Aware)
+When updating an asset, the API automatically converts your input to Metric based on your user settings.
+
+**Scenario:** You want to update `shelf_width` to **10 inches**.
+
+```python
+# 1. Authenticate
+auth = ("architect_jane", "SecurePassword123!")
+
+# 2. Patch the Asset
+url = "http://localhost:8000/api/assets/1/"
+payload = {
+    "custom_fields": {
+        "shelf_width": 10
+    },
+    "input_units": {
+        "length": "in" # Explicitly tell the API this 10 is in Inches
+    }
+}
+
+response = requests.patch(url, json=payload, auth=auth)
+
+# 3. Verification
+# The database now stores this as 254.0 mm.
+# The API output will convert it back based on your user settings or request.
+print(response.json()['custom_fields']['shelf_width'])
 ```

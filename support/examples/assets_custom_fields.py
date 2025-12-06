@@ -11,45 +11,13 @@ HEADERS = {"Content-Type": "application/json"}
 class EphanyCLI:
     def __init__(self):
         self.auth = None
-        self.user_id = None
-        self.user_settings = {}
 
     def login(self):
         print("\n=== Ephany Asset Manager Login ===")
         username = input("Username: ")
         password = getpass.getpass("Password: ")
         self.auth = (username, password)
-
-        # Verify and get User ID
-        try:
-            # We filter the list to find ourselves since we don't have /users/me yet
-            resp = requests.get(f"{BASE_URL}/users/", auth=self.auth, headers=HEADERS)
-            if resp.status_code == 200:
-                users = resp.json()
-                for u in users:
-                    if u['username'] == username:
-                        self.user_id = u['id']
-                        # Fetch settings specifically if nested or separate
-                        self.user_settings = u.get('settings', {})
-                        break
-
-                if self.user_id:
-                    print(f"\n[SUCCESS] Welcome, {username}!")
-                    self.print_user_context()
-                    return True
-
-            print(f"[ERROR] Login failed. Status: {resp.status_code}")
-            return False
-
-        except requests.exceptions.ConnectionError:
-            print("[CRITICAL] Could not connect to API. Is the server running?")
-            sys.exit(1)
-
-    def print_user_context(self):
-        length_unit = self.user_settings.get('length_unit', 'mm (default)')
-        print(f" > Your Unit Preference: {length_unit}")
-        print(" > Note: Ephany stores all data internally in METRIC (mm).")
-        print(" > We will convert your inputs automatically based on your settings.\n")
+        return True
 
     def find_asset(self):
         while True:
@@ -74,17 +42,21 @@ class EphanyCLI:
         print(f"Current Custom Fields: {json.dumps(asset.get('custom_fields', {}), indent=2)}")
 
         key = input("Enter Field Key (e.g., shelf_width): ").strip()
-        val_str = input(f"Enter New Value for '{key}' (in {self.user_settings.get('length_unit', 'mm')}): ").strip()
+        unit = input("Enter Unit (e.g., mm, in, ft): ").strip()
+        val_str = input(f"Enter New Value for '{key}' (in {unit}): ").strip()
 
         # Simple type inference for the demo
         try:
-            val = float(val_str)
+            val = round(float(val_str), 2)
         except ValueError:
             val = val_str  # Keep as string if not a number
 
         patch_data = {
             "custom_fields": {
                 key: val
+            },
+            "input_units": {
+                "length": unit
             }
         }
 
@@ -99,17 +71,22 @@ class EphanyCLI:
         if resp.status_code == 200:
             updated_asset = resp.json()
             new_val = updated_asset['custom_fields'].get(key)
+            display_unit = updated_asset.get('_display_units', {}).get('length', 'unknown')
 
             print("\n[SUCCESS] Update Complete!")
-            print(f" > You Input:      {val} ({self.user_settings.get('length_unit')})")
-            print(f" > API Returned:   {new_val} (Converted back to your preference)")
+            print(f" > You Input:      {val} ({unit})")
+            print(f" > API Returned:   {new_val} ({display_unit})")
 
             # Rough math check for display purposes
-            if self.user_settings.get('length_unit') == 'in' and isinstance(val, float):
-                mm_val = val * 25.4
-                print(f" > Database Store: {mm_val:.2f} mm (Approx)")
-            elif self.user_settings.get('length_unit') == 'ft' and isinstance(val, float):
-                mm_val = val * 304.8
+            if isinstance(val, (int, float)):
+                mm_val = val
+                if unit == 'in':
+                    mm_val = val * 25.4
+                elif unit == 'ft':
+                    mm_val = val * 304.8
+                elif unit == 'cm':
+                    mm_val = val * 10.0
+
                 print(f" > Database Store: {mm_val:.2f} mm (Approx)")
 
         else:
