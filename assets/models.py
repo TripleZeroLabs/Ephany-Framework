@@ -1,11 +1,25 @@
 from django.db import models
 from django.core.exceptions import ValidationError
 import re
+import os
+
+
+def manufacturer_logo_path(instance, filename):
+    ext = filename.split('.')[-1]
+    pk = instance.pk if instance.pk else "new"
+    return os.path.join('manufacturers', f"logo_{pk}.{ext}")
+
+
+def asset_catalog_img_path(instance, filename):
+    ext = filename.split('.')[-1]
+    pk = instance.pk if instance.pk else "new"
+    return os.path.join('assets', f"catalog_img_{pk}.{ext}")
 
 
 class Manufacturer(models.Model):
     name = models.CharField(max_length=255, unique=True)
     url = models.URLField(blank=True, verbose_name="Company Website")
+    logo = models.ImageField(upload_to=manufacturer_logo_path, blank=True, null=True)
 
     def __str__(self):
         return self.name
@@ -94,6 +108,7 @@ class Asset(models.Model):
     model = models.CharField(max_length=255)
     description = models.TextField()
     url = models.URLField(blank=True, verbose_name="Product URL")
+    catalog_img = models.ImageField(upload_to=asset_catalog_img_path, blank=True, null=True)
 
     # Standard dimensions
     overall_height = models.FloatField(blank=True, null=True)
