@@ -16,6 +16,7 @@ class AssetFileSerializer(serializers.ModelSerializer):
 
 class AssetSerializer(serializers.ModelSerializer):
     manufacturer_name = serializers.CharField(source='manufacturer.name', read_only=True)
+    category_name = serializers.CharField(source='category.name', read_only=True)
     files = AssetFileSerializer(many=True, read_only=True)
     file_ids = serializers.PrimaryKeyRelatedField(
         queryset=AssetFile.objects.all(),
@@ -39,6 +40,8 @@ class AssetSerializer(serializers.ModelSerializer):
             'unique_id',
             'manufacturer',
             'manufacturer_name',
+            'category',
+            'category_name',
             'model',
             'name',
             'description',
@@ -49,7 +52,7 @@ class AssetSerializer(serializers.ModelSerializer):
             'custom_fields',
             'files',
             'file_ids',
-            'input_units' # Added to fields
+            'input_units'
         ]
 
     def _get_user_units(self):

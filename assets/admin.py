@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Asset, AssetAttribute, AssetFile, Manufacturer
+from .models import Asset, AssetAttribute, AssetCategory, AssetFile, Manufacturer
 
 
 @admin.register(Asset)
@@ -20,6 +20,11 @@ class AssetAdmin(admin.ModelAdmin):
 
 
 @admin.register(AssetAttribute)
+class AssetAttributeAdmin(admin.ModelAdmin):
+    list_display = ('name',)
+
+
+@admin.register(AssetCategory)
 class AssetAttributeAdmin(admin.ModelAdmin):
     list_display = ('name',)
 

@@ -40,6 +40,9 @@ class AssetFile(models.Model):
     )
     uploaded_at = models.DateTimeField(auto_now_add=True)
 
+    class Meta:
+        verbose_name_plural = "Asset Files"
+
     def __str__(self):
         return f"{self.get_category_display()}: {self.file.name}"
 
@@ -109,6 +112,10 @@ class AssetAttribute(models.Model):
             raise ValidationError({
                 'name': "Invalid format. Use lowercase, underscores, and alphanumeric characters only (e.g., 'asset_weight')."
             })
+
+    class Meta:
+        verbose_name_plural = "Asset Attributes"
+        ordering = ['name']
 
     def __str__(self):
         return f"{self.name} ({self.get_data_type_display()})"
