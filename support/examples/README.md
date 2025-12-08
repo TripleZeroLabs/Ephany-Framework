@@ -18,6 +18,26 @@ This folder contains Python scripts demonstrating how to interact with the Ephan
 
 ## Available Scripts
 
+    *   [Assets & Attributes](#assets--attributes)
+
+### Asset Categories
+
+The `AssetCategory` model provides a way to organize and group assets into logical categories (e.g., Refrigerators, Ovens, Sinks, HVAC Equipment). This helps users filter and browse assets more efficiently.
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `name` | CharField | Unique category name (e.g., "Refrigerators") |
+| `description` | TextField | Optional description of the category |
+
+**Example categories:**
+- Refrigerators
+- Ambient Shelving
+- Sinks & Faucets
+- HVAC Equipment
+- Lighting Fixtures
+
+Each `Asset` can optionally be assigned to one category via the `category` foreign key field. If a category is deleted, assets in that category will have their `category` set to `null` (not deleted).
+
 ### 1. test_api.py
 A simple health check script. Use this first to ensure your API is online and reachable.
 ```bash
