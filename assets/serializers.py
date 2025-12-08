@@ -80,22 +80,29 @@ class AssetSerializer(serializers.ModelSerializer):
         }
         return SPECS.get(spec_type)
 
+    def create(self, validated_data):
+        """
+        Override create to remove input_units before creating the model instance.
+        """
+        validated_data.pop('input_units', None)
+        return super().create(validated_data)
+
     def update(self, instance, validated_data):
         """
         Override update to perform a MERGE on custom_fields.
         """
         new_custom_fields = validated_data.pop('custom_fields', None)
-        # Remove input_units if it slipped through (though write_only handles mostly)
+        # Remove input_units if it slipped through
         validated_data.pop('input_units', None)
-        
+    
         instance = super().update(instance, validated_data)
-        
+    
         if new_custom_fields is not None:
             existing_data = instance.custom_fields or {}
             existing_data.update(new_custom_fields)
             instance.custom_fields = existing_data
             instance.save()
-            
+        
         return instance
 
     def to_representation(self, instance):
