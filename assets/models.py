@@ -44,6 +44,19 @@ class AssetFile(models.Model):
         return f"{self.get_category_display()}: {self.file.name}"
 
 
+class AssetCategory(models.Model):
+    """Categories for organizing assets (e.g., Refrigerators, Ovens, Sinks)."""
+    name = models.CharField(max_length=100, unique=True)
+    description = models.TextField(blank=True)
+
+    class Meta:
+        verbose_name_plural = "Asset Categories"
+        ordering = ['name']
+
+    def __str__(self):
+        return self.name
+
+
 class AssetAttribute(models.Model):
     class AttributeType(models.TextChoices):
         STRING = 'str', 'Text'
@@ -104,6 +117,13 @@ class AssetAttribute(models.Model):
 class Asset(models.Model):
     unique_id = models.CharField(max_length=100, unique=True, verbose_name="Asset ID")
     manufacturer = models.ForeignKey(Manufacturer, on_delete=models.CASCADE, related_name='assets')
+    category = models.ForeignKey(
+        AssetCategory,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='assets'
+    )
     files = models.ManyToManyField(AssetFile, blank=True, related_name='assets')
     model = models.CharField(max_length=255)
     name = models.CharField(max_length=255, blank=False)
@@ -118,7 +138,6 @@ class Asset(models.Model):
 
     custom_fields = models.JSONField(default=dict, blank=True)
     uploaded_at = models.DateTimeField(auto_now_add=True)
-
 
     def clean(self):
         super().clean()
