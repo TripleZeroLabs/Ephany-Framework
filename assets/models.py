@@ -106,6 +106,7 @@ class Asset(models.Model):
     manufacturer = models.ForeignKey(Manufacturer, on_delete=models.CASCADE, related_name='assets')
     files = models.ManyToManyField(AssetFile, blank=True, related_name='assets')
     model = models.CharField(max_length=255)
+    name = models.CharField(max_length=255, blank=False)
     description = models.TextField()
     url = models.URLField(blank=True, verbose_name="Product URL")
     catalog_img = models.ImageField(upload_to=asset_catalog_img_path, blank=True, null=True)

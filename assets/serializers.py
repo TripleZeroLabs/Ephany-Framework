@@ -40,6 +40,7 @@ class AssetSerializer(serializers.ModelSerializer):
             'manufacturer',
             'manufacturer_name',
             'model',
+            'name',
             'description',
             'url',
             'overall_height',
