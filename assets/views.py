@@ -27,4 +27,6 @@ class AssetViewSet(viewsets.ModelViewSet):
         'unique_id': ['exact', 'iexact'],
         'manufacturer__name': ['exact', 'iexact', 'icontains'],
         'model': ['exact', 'iexact', 'icontains'],
+        'name': ['icontains', 'exact'],
+        'description': ['icontains', 'exact'],
     }
