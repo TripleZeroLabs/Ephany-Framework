@@ -139,3 +139,15 @@ STATIC_ROOT = BASE_DIR / "staticfiles"
 # Media files (uploads)
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
+
+# REST API settings
+REST_FRAMEWORK = {
+    "DEFAULT_RENDERER_CLASSES": [
+        "rest_framework.renderers.JSONRenderer",
+        "rest_framework.renderers.BrowsableAPIRenderer",
+    ],
+
+    # Update the title in the browsable API UI
+    "DEFAULT_SCHEMA_CLASS": "rest_framework.schemas.openapi.AutoSchema",
+    "DEFAULT_METADATA_CLASS": "rest_framework.metadata.SimpleMetadata",
+}
