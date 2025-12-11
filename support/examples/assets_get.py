@@ -44,7 +44,7 @@ def main():
 
     if assets:
         for asset in assets:
-            print(f"  - {asset['unique_id']}: {asset['name']}")
+            print(f"  - {asset['type_id']}: {asset['name']}")
     else:
         print("  No assets found.")
 

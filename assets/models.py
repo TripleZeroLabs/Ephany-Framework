@@ -122,7 +122,7 @@ class AssetAttribute(models.Model):
 
 
 class Asset(models.Model):
-    unique_id = models.CharField(max_length=100, unique=True, verbose_name="Asset ID")
+    type_id = models.CharField(max_length=100, unique=True, verbose_name="Type ID")
     manufacturer = models.ForeignKey(Manufacturer, on_delete=models.CASCADE, related_name='assets')
     category = models.ForeignKey(
         AssetCategory,
@@ -201,4 +201,4 @@ class Asset(models.Model):
             self.custom_fields = normalized_data
 
     def __str__(self):
-        return f"{self.manufacturer.name} {self.model} ({self.unique_id})"
+        return f"{self.manufacturer.name} {self.model} ({self.type_id})"

@@ -27,10 +27,10 @@ def main():
             json={"category": CATEGORY_PK}
         )
         if resp.status_code == 200:
-            print(f"[OK] {asset['unique_id']}")
+            print(f"[OK] {asset['type_id']}")
             updated += 1
         else:
-            print(f"[FAIL] {asset['unique_id']} - {resp.status_code}")
+            print(f"[FAIL] {asset['type_id']} - {resp.status_code}")
 
     print(f"\nUpdated {updated}/{len(assets)} assets")
 

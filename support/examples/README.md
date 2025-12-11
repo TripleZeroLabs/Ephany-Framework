@@ -105,7 +105,7 @@ Here is how we find an asset by its unique ID.
 import requests
 
 url = "http://127.0.0.1:8000/api/assets/"
-params = {'unique_id__iexact': "A-001"} # Case-insensitive search
+params = {'type_id__iexact': "A-001"} # Case-insensitive search
 
 response = requests.get(url, params=params)
 

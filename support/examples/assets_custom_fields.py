@@ -21,24 +21,24 @@ class EphanyCLI:
 
     def find_asset(self):
         while True:
-            unique_id = input("Enter Asset Unique ID to update (or 'q' to quit): ").strip()
-            if unique_id.lower() == 'q':
+            type_id = input("Enter Asset Unique ID to update (or 'q' to quit): ").strip()
+            if type_id.lower() == 'q':
                 sys.exit(0)
 
-            resp = requests.get(f"{BASE_URL}/assets/?unique_id__iexact={unique_id}", auth=self.auth)
+            resp = requests.get(f"{BASE_URL}/assets/?type_id__iexact={type_id}", auth=self.auth)
             if resp.status_code == 200:
                 results = resp.json()
                 if results:
                     asset = results[0]
-                    print(f"Found: {asset['manufacturer_name']} {asset['model']} (ID: {asset['unique_id']})")
+                    print(f"Found: {asset['manufacturer_name']} {asset['model']} (ID: {asset['type_id']})")
                     return asset
                 else:
-                    print(f"[404] No asset found with ID '{unique_id}'. Try again.")
+                    print(f"[404] No asset found with ID '{type_id}'. Try again.")
             else:
                 print(f"[ERROR] API Error: {resp.status_code}")
 
     def update_field(self, asset):
-        print(f"\n--- Update Custom Field for {asset['unique_id']} ---")
+        print(f"\n--- Update Custom Field for {asset['type_id']} ---")
         print(f"Current Custom Fields: {json.dumps(asset.get('custom_fields', {}), indent=2)}")
 
         key = input("Enter Field Key (e.g., shelf_width): ").strip()

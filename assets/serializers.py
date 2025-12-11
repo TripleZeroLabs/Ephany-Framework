@@ -37,7 +37,7 @@ class AssetSerializer(serializers.ModelSerializer):
         model = Asset
         fields = [
             'id',
-            'unique_id',
+            'type_id',
             'manufacturer',
             'manufacturer_name',
             'category',

@@ -22,9 +22,9 @@ class AssetViewSet(viewsets.ModelViewSet):
     queryset = Asset.objects.all()
     serializer_class = AssetSerializer
     filter_backends = [DjangoFilterBackend]
-    # This automatically enables ?unique_id=...&manufacturer=...&model=...
+    # This automatically enables ?type_id=...&manufacturer=...&model=...
     filterset_fields = {
-        'unique_id': ['exact', 'iexact'],
+        'type_id': ['exact', 'iexact'],
         'manufacturer__name': ['exact', 'iexact', 'icontains'],
         'model': ['exact', 'iexact', 'icontains'],
         'name': ['icontains', 'exact'],

@@ -33,7 +33,7 @@ def create_asset(item, sequence_number):
 
     # Build the payload
     payload = {
-        'unique_id': f"{ID_PREFIX}-{sequence_number}",
+        'type_id': f"{ID_PREFIX}-{sequence_number}",
         'manufacturer': item['manufacturer_id'],
         'model': item['model'],
         'name': item['name'],
@@ -91,7 +91,7 @@ def main():
         
         if response.status_code == 201:
             result = response.json()
-            print(f"[OK] {i:02d}. {result['unique_id']} - {result['name'][:50]}")
+            print(f"[OK] {i:02d}. {result['type_id']} - {result['name'][:50]}")
             created += 1
         else:
             error_msg = format_error(response)

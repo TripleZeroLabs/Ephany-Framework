@@ -43,7 +43,7 @@ Crucially, this model powers Ephany's **Automatic Unit Conversion** engine:
 
 | Model | Description | Key Fields |
 | :--- | :--- | :--- |
-| **Asset** | A physical product or component. | `unique_id`, `model`, `manufacturer`, `height`, `width`, `depth`, `custom_fields` (JSON) |
+| **Asset** | A physical product or component. | `type_id`, `model`, `manufacturer`, `height`, `width`, `depth`, `custom_fields` (JSON) |
 | **Manufacturer** | The maker of the asset. | `name`, `url` |
 | **AssetFile** | Attachments like PDFs or CAD files. | `file`, `category` (Cut Sheet, Revit Family, etc.) |
 | **AssetAttribute** | Schema definition for custom fields. | `name` (key), `data_type` (int/str), `unit_type` (Length, Area, etc.) |
@@ -137,7 +137,7 @@ Find an asset by its unique ID (case-insensitive).
 
 ```python
 url = "http://localhost:8000/api/assets/"
-params = {"unique_id__iexact": "PUMP-001"}
+params = {"type_id__iexact": "PUMP-001"}
 
 response = requests.get(url, params=params)
 # Returns a list of matching assets

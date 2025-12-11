@@ -4,8 +4,8 @@ from .models import Asset, AssetAttribute, AssetCategory, AssetFile, Manufacture
 
 @admin.register(Asset)
 class AssetAdmin(admin.ModelAdmin):
-    list_display = ('unique_id', 'manufacturer', 'model')
-    search_fields = ('unique_id', 'model', 'manufacturer__name')
+    list_display = ('type_id', 'manufacturer', 'model')
+    search_fields = ('type_id', 'model', 'manufacturer__name')
     filter_horizontal = ('files',)
 
     # ...

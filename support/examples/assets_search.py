@@ -4,12 +4,12 @@ import argparse
 from config import BASE_URL
 
 
-def search_by_unique_id(unique_id):
-    """Search for an asset specifically by its unique_id (case-insensitive)."""
-    print(f"\n--- Searching for Unique ID: {unique_id} ---")
+def search_by_type_id(type_id):
+    """Search for an asset specifically by its type_id (case-insensitive)."""
+    print(f"\n--- Searching for Unique ID: {type_id} ---")
 
-    # Changed from 'unique_id' to 'unique_id__iexact'
-    params = {'unique_id__iexact': unique_id}
+    # Changed from 'type_id' to 'type_id__iexact'
+    params = {'type_id__iexact': type_id}
     response = requests.get(f"{BASE_URL}/assets/", params=params)
 
     if response.status_code == 200:
@@ -37,7 +37,7 @@ def search_by_manufacturer_and_model(manufacturer_name, model_name):
         if results:
             print(f"Found {len(results)} match(es):")
             for asset in results:
-                print(f"- {asset['manufacturer_name']} {asset['model']} (ID: {asset['unique_id']})")
+                print(f"- {asset['manufacturer_name']} {asset['model']} (ID: {asset['type_id']})")
         else:
             print("No matching assets found.")
     else:
@@ -66,9 +66,9 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Search for assets or manufacturers via the API.")
     subparsers = parser.add_subparsers(dest='command', help='Available commands')
 
-    # Command: id <unique_id>
+    # Command: id <type_id>
     parser_id = subparsers.add_parser('id', help='Search asset by Unique ID')
-    parser_id.add_argument('unique_id', type=str, help='The Unique ID of the asset')
+    parser_id.add_argument('type_id', type=str, help='The Unique ID of the asset')
 
     # Command: model <manufacturer> <model>
     parser_model = subparsers.add_parser('model', help='Search asset by Manufacturer and Model')
@@ -82,7 +82,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     if args.command == 'id':
-        search_by_unique_id(args.unique_id)
+        search_by_type_id(args.type_id)
     elif args.command == 'model':
         search_by_manufacturer_and_model(args.manufacturer, args.model_name)
     elif args.command == 'manufacturer':

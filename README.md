@@ -85,7 +85,7 @@ curl -X GET "http://127.0.0.1:8000/api/assets/?manufacturer__name__icontains=Son
 [
   {
     "id": 1,
-    "unique_id": "A-001",
+    "type_id": "A-001",
     "manufacturer": 1,
     "manufacturer_name": "Sony Corp",
     "model": "Bravia X1",
