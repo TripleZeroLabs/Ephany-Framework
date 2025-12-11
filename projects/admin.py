@@ -4,8 +4,8 @@ from .models import Project, Snapshot
 # Register your models here.
 @admin.register(Project)
 class ProjectAdmin(admin.ModelAdmin):
-    list_display = ('name', 'unique_id')
-    search_fields = ('name', 'unique_id')
+    list_display = ('name', 'job_id')
+    search_fields = ('name', 'job_id')
 
 @admin.register(Snapshot)
 class SnapshotAdmin(admin.ModelAdmin):

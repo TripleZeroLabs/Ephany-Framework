@@ -21,10 +21,10 @@ class Command(BaseCommand):
             "Phase 3: Finishes & Fixtures"
         ]
 
-        for unique_id, name in locations:
+        for job_id, name in locations:
             # Create Project
             project, created = Project.objects.get_or_create(
-                unique_id=unique_id,
+                job_id=job_id,
                 defaults={
                     'name': name,
                     'description': f"Construction project for {name}"

@@ -13,4 +13,4 @@ class Command(BaseCommand):
         self.stdout.write("-" * 60)
 
         for p in projects:
-            self.stdout.write(f"{p.unique_id:<15} | {p.name:<40}")
+            self.stdout.write(f"{p.job_id:<15} | {p.name:<40}")
