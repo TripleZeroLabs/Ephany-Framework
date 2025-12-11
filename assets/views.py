@@ -1,7 +1,7 @@
 from rest_framework import viewsets
 from django_filters.rest_framework import DjangoFilterBackend
-from .models import Manufacturer, Asset, AssetFile
-from .serializers import ManufacturerSerializer, AssetSerializer, AssetFileSerializer
+from .models import Manufacturer, Asset, AssetCategory, AssetFile
+from .serializers import ManufacturerSerializer, AssetSerializer, AssetFileSerializer, AssetCategorySerializer
 
 
 class ManufacturerViewSet(viewsets.ModelViewSet):
@@ -11,6 +11,11 @@ class ManufacturerViewSet(viewsets.ModelViewSet):
     filterset_fields = {
         'name': ['exact', 'iexact', 'icontains']
     }
+
+
+class AssetCategoryViewSet(viewsets.ModelViewSet):
+    queryset = AssetCategory.objects.all()
+    serializer_class = AssetCategorySerializer
 
 
 class AssetFileViewSet(viewsets.ModelViewSet):
