@@ -62,10 +62,10 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'access.middleware.APIKeyMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
-    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
@@ -168,8 +168,8 @@ API_KEY_PROTECTED_PREFIXES = [
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173",  # Vite dev server
     "https://ephany.io",
-    "https://framework.ephany.io"
-    # add others as needed, e.g. "http://localhost:3000"
+    "https://framework.ephany.io",
+    "http://localhost:3000"
 ]
 
 CORS_ALLOW_HEADERS = list(default_headers) + [
