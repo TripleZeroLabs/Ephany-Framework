@@ -49,6 +49,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     # Local apps
+    'access',
     'assets',
     'projects',
     'users',
@@ -59,6 +60,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'access.middleware.APIKeyMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -151,3 +153,10 @@ REST_FRAMEWORK = {
     "DEFAULT_SCHEMA_CLASS": "rest_framework.schemas.openapi.AutoSchema",
     "DEFAULT_METADATA_CLASS": "rest_framework.metadata.SimpleMetadata",
 }
+
+API_KEY_AUTH_ENABLED = os.getenv("API_KEY_AUTH_ENABLED", "False").lower() == "true"
+
+# All paths starting with any of these prefixes will require an API key when enabled
+API_KEY_PROTECTED_PREFIXES = [
+    "/api/",
+]
