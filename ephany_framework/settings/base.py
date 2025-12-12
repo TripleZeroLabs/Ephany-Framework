@@ -12,7 +12,9 @@ https://docs.djangoproject.com/en/6.0/ref/settings/
 
 from pathlib import Path
 import os
-from dotenv import load_dotenv # New import
+from dotenv import load_dotenv
+from corsheaders.defaults import default_headers
+
 
 # Load environment variables from .env file
 load_dotenv()
@@ -54,6 +56,7 @@ INSTALLED_APPS = [
     'projects',
     'users',
     # Third party apps
+    'corsheaders',
     'django_filters',
     'rest_framework',
 ]
@@ -62,6 +65,7 @@ MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'access.middleware.APIKeyMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
@@ -159,4 +163,15 @@ API_KEY_AUTH_ENABLED = os.getenv("API_KEY_AUTH_ENABLED", "False").lower() == "tr
 # All paths starting with any of these prefixes will require an API key when enabled
 API_KEY_PROTECTED_PREFIXES = [
     "/api/",
+]
+
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:5173",  # Vite dev server
+    "https://ephany.io",
+    "https://framework.ephany.io"
+    # add others as needed, e.g. "http://localhost:3000"
+]
+
+CORS_ALLOW_HEADERS = list(default_headers) + [
+    "x-api-key",
 ]
