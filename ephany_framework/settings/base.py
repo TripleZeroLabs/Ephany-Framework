@@ -156,6 +156,8 @@ REST_FRAMEWORK = {
     # Update the title in the browsable API UI
     "DEFAULT_SCHEMA_CLASS": "rest_framework.schemas.openapi.AutoSchema",
     "DEFAULT_METADATA_CLASS": "rest_framework.metadata.SimpleMetadata",
+    "DEFAULT_PAGINATION_CLASS": "ephany_framework.pagination.StandardResultsSetPagination",
+    "PAGE_SIZE": 50,
 }
 
 API_KEY_AUTH_ENABLED = os.getenv("API_KEY_AUTH_ENABLED", "False").lower() == "true"
