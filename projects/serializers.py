@@ -4,12 +4,21 @@ from .models import Project, Snapshot
 class SnapshotSerializer(serializers.ModelSerializer):
     class Meta:
         model = Snapshot
-        fields = '__all__'
+        fields = ['id', 'project', 'name', 'date', 'created_at']
+
 
 class ProjectSerializer(serializers.ModelSerializer):
-    # Optional: Include snapshots in the project detail
-    snapshots = SnapshotSerializer(many=True, read_only=True)
+    # Optional: Include the latest snapshot date or count if needed for the table
+    snapshot_count = serializers.IntegerField(source='snapshots.count', read_only=True)
 
     class Meta:
         model = Project
-        fields = '__all__'
+        fields = [
+            'id',
+            'job_id',
+            'name',
+            'description',
+            'created_at',
+            'updated_at',
+            'snapshot_count'
+        ]

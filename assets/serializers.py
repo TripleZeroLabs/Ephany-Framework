@@ -10,14 +10,18 @@ from ephany_framework.utils import UnitConverter
 
 
 class ManufacturerSerializer(serializers.ModelSerializer):
+    """
+    Serializer for the Manufacturer model.
+    Includes logo and url fields for display on the Manufacturers page.
+    """
     class Meta:
         model = Manufacturer
-        fields = ['id', 'name']
+        fields = ['id', 'name', 'url', 'logo']
 
 
 class AssetCategorySerializer(serializers.ModelSerializer):
     """
-    Basic serializer for CRUD operations on AssetCategory records.
+    Basic serializer to manage AssetCategory records via the API.
     """
     class Meta:
         model = AssetCategory
