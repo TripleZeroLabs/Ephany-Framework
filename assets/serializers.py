@@ -14,6 +14,7 @@ class ManufacturerSerializer(serializers.ModelSerializer):
     Serializer for the Manufacturer model.
     Includes logo and url fields for display on the Manufacturers page.
     """
+
     class Meta:
         model = Manufacturer
         fields = ['id', 'name', 'url', 'logo']
@@ -23,6 +24,7 @@ class AssetCategorySerializer(serializers.ModelSerializer):
     """
     Basic serializer to manage AssetCategory records via the API.
     """
+
     class Meta:
         model = AssetCategory
         fields = ['id', 'name']
@@ -30,10 +32,9 @@ class AssetCategorySerializer(serializers.ModelSerializer):
 
 class CategoryListSerializer(serializers.ModelSerializer):
     """
-    Minimal serializer used by custom view actions (e.g., all_categories)
-    to return a simple list of category IDs and names, ideal for frontend
-    filter dropdowns.
+    Minimal serializer used by custom view actions.
     """
+
     class Meta:
         model = AssetCategory
         fields = ['id', 'name']
@@ -47,20 +48,39 @@ class AssetFileSerializer(serializers.ModelSerializer):
         fields = ['id', 'file', 'category', 'category_display', 'uploaded_at']
 
 
-from rest_framework import serializers
-from .models import Asset, AssetFile, AssetAttribute  # Adjust imports as needed
-
-
-# from .utils import UnitConverter # Assuming this exists based on your code
-
 class AssetSerializer(serializers.ModelSerializer):
     """
-    Primary serializer for Asset instances, handling complex logic like
-    unit conversion and custom field validation/representation.
+    Primary serializer for Asset instances.
+    Separates Read (Nested Object) from Write (ID) for Manufacturer and Category.
     """
+    # --- READ FIELDS (Nested Objects) ---
+    # These will output the full object structure (id, name, logo, etc.) on GET requests
+    manufacturer = ManufacturerSerializer(read_only=True)
+    category = AssetCategorySerializer(read_only=True)
+
+    # We can keep these for backward compatibility if your frontend relies on flattened keys,
+    # otherwise they are redundant because 'manufacturer.name' is available in the objects above.
     manufacturer_name = serializers.CharField(source='manufacturer.name', read_only=True)
     category_name = serializers.CharField(source='category.name', read_only=True)
 
+    # --- WRITE FIELDS (IDs) ---
+    # These accept an ID (integer) on POST/PATCH and save it to the relationship
+    manufacturer_id = serializers.PrimaryKeyRelatedField(
+        queryset=Manufacturer.objects.all(),
+        source='manufacturer',  # Maps this input to the model's 'manufacturer' field
+        write_only=True,
+        required=False,
+        allow_null=True
+    )
+    category_id = serializers.PrimaryKeyRelatedField(
+        queryset=AssetCategory.objects.all(),
+        source='category',  # Maps this input to the model's 'category' field
+        write_only=True,
+        required=False,
+        allow_null=True
+    )
+
+    # --- FILES HANDLING ---
     files = AssetFileSerializer(many=True, read_only=True)
     file_ids = serializers.PrimaryKeyRelatedField(
         queryset=AssetFile.objects.all(),
@@ -70,11 +90,11 @@ class AssetSerializer(serializers.ModelSerializer):
         required=False
     )
 
-    # Input field to specify units for dimensional data during write operations.
+    # --- UNITS HANDLING ---
     input_units = serializers.DictField(
         required=False,
         write_only=True,
-        help_text="Required if providing dimensions. Example: {'length': 'ft', 'mass': 'lb'}"
+        help_text="Required if providing dimensions. Example: {'length': 'ft'}"
     )
 
     class Meta:
@@ -82,15 +102,20 @@ class AssetSerializer(serializers.ModelSerializer):
         fields = [
             'id',
             'type_id',
+            # Read fields
             'manufacturer',
             'manufacturer_name',
             'category',
             'category_name',
+            # Write fields
+            'manufacturer_id',
+            'category_id',
+            # Standard fields
             'model',
             'name',
             'description',
             'url',
-            'catalog_img',  # <--- ADDED THIS FIELD
+            'catalog_img',
             'overall_height',
             'overall_width',
             'overall_depth',
@@ -101,7 +126,7 @@ class AssetSerializer(serializers.ModelSerializer):
         ]
 
     def _get_user_units(self):
-        """Helper to retrieve user-defined unit preferences for output representation."""
+        """Helper to retrieve user-defined unit preferences."""
         defaults = {'length': 'mm', 'area': 'sq_m', 'volume': 'cu_m', 'mass': 'kg'}
         request = self.context.get('request')
         if request and request.user.is_authenticated:
@@ -116,7 +141,7 @@ class AssetSerializer(serializers.ModelSerializer):
         return defaults
 
     def _get_spec_category(self, spec_type):
-        """Maps an Autodesk SpecTypeId string to an internal unit category (e.g., 'length')."""
+        """Maps Autodesk SpecTypeId to internal categories."""
         SPECS = {
             'autodesk.spec.aec:length-2.0.0': 'length',
             'autodesk.spec.aec:distance-1.0.0': 'length',
@@ -128,15 +153,10 @@ class AssetSerializer(serializers.ModelSerializer):
         return SPECS.get(spec_type)
 
     def create(self, validated_data):
-        """Removes non-model fields (input_units) before creating the model instance."""
         validated_data.pop('input_units', None)
         return super().create(validated_data)
 
     def update(self, instance, validated_data):
-        """
-        Overrides update to perform a MERGE on the custom_fields JSONField
-        rather than overwriting the entire dictionary.
-        """
         new_custom_fields = validated_data.pop('custom_fields', None)
         validated_data.pop('input_units', None)
 
@@ -151,13 +171,10 @@ class AssetSerializer(serializers.ModelSerializer):
         return instance
 
     def to_representation(self, instance):
-        """
-        Converts stored metric data (READ) into the user's preferred display units.
-        """
         ret = super().to_representation(instance)
         user_units = self._get_user_units()
 
-        # 1. Convert Standard Fields (Length)
+        # 1. Convert Standard Fields
         for field in ['overall_height', 'overall_width', 'overall_depth']:
             if field in ret and ret[field] is not None:
                 ret[field] = UnitConverter.from_storage(
@@ -166,11 +183,10 @@ class AssetSerializer(serializers.ModelSerializer):
                     'length'
                 )
 
-        # 2. Convert Custom Fields (All Types)
+        # 2. Convert Custom Fields
         if instance.custom_fields:
             attributes = AssetAttribute.objects.filter(name__in=instance.custom_fields.keys())
             attr_map = {attr.name: attr.unit_type for attr in attributes}
-
             new_custom_fields = instance.custom_fields.copy()
 
             for key, value in new_custom_fields.items():
@@ -192,42 +208,26 @@ class AssetSerializer(serializers.ModelSerializer):
         return ret
 
     def to_internal_value(self, data):
-        # 1. Create a standard mutable Python dictionary
-        # We use .dict() if available (QueryDict), otherwise cast to dict or copy
         if hasattr(data, 'dict'):
             mutable_data = data.dict()
         else:
-            # If it's a generic dict, copy it.
-            # If it's immutable (rare here), dict() casts it safely.
             mutable_data = dict(data)
 
-        # 2. FORCE-MERGE FILES
-        # The 'data' object passed here often strips file objects in subtle ways
-        # when copied. We fetch the raw file objects from the request context
-        # and overwrite whatever is in mutable_data.
         request = self.context.get('request')
         if request and request.FILES:
             for key, file_obj in request.FILES.items():
                 mutable_data[key] = file_obj
 
-        # ... (Your existing Input Units logic) ...
-
-        # NOTE: If input_units is being sent as a JSON string inside multipart form,
-        # you might need to parse it here. But for image uploads, it's usually None.
         input_units = mutable_data.get('input_units')
-
         required_categories = set()
 
-        # 3. Identify Categories (Standard Fields)
         for field in ['overall_height', 'overall_width', 'overall_depth']:
             if field in mutable_data and mutable_data[field] is not None:
                 required_categories.add('length')
 
-        # 4. Identify Categories (Custom Fields)
         custom_fields = mutable_data.get('custom_fields')
         custom_attr_map = {}
 
-        # Handle custom_fields if they came in (careful with parsing if multipart)
         if custom_fields and isinstance(custom_fields, dict):
             attributes = AssetAttribute.objects.filter(name__in=custom_fields.keys())
             for attr in attributes:
@@ -237,23 +237,10 @@ class AssetSerializer(serializers.ModelSerializer):
                         required_categories.add(category)
                     custom_attr_map[attr.name] = category
 
-        # 5. Validate input_units
         if required_categories:
             if not input_units or not isinstance(input_units, dict):
-                # If doing a pure file upload, we usually want to skip this validation
-                # unless dimensional data was actually provided.
                 raise serializers.ValidationError({
-                    "input_units": (
-                        "This field is required because you provided dimensional data. "
-                        f"Required units for: {', '.join(required_categories)}"
-                    )
-                })
-
-            # ... (Rest of your unit validation logic) ...
-            missing_units = [cat for cat in required_categories if cat not in input_units]
-            if missing_units:
-                raise serializers.ValidationError({
-                    "input_units": f"Missing unit definitions for: {', '.join(missing_units)}"
+                    "input_units": f"Required units for: {', '.join(required_categories)}"
                 })
 
             for cat, unit_str in input_units.items():
@@ -261,15 +248,10 @@ class AssetSerializer(serializers.ModelSerializer):
                     if cat in required_categories:
                         valid_opts = list(UnitConverter.TO_BASE[cat].keys())
                         raise serializers.ValidationError({
-                            "input_units": (
-                                f"Invalid unit '{unit_str}' for category '{cat}'. "
-                                f"Valid options: {valid_opts}"
-                            )
+                            "input_units": f"Invalid unit '{unit_str}' for category '{cat}'."
                         })
 
-        # 6. Perform Conversion
-        if required_categories:
-            # Standard fields
+            # Perform Conversion
             for field in ['overall_height', 'overall_width', 'overall_depth']:
                 if field in mutable_data and mutable_data[field] is not None:
                     mutable_data[field] = UnitConverter.to_storage(
@@ -278,7 +260,6 @@ class AssetSerializer(serializers.ModelSerializer):
                         'length'
                     )
 
-            # Custom fields
             if custom_fields:
                 new_custom_fields = custom_fields.copy()
                 for key, value in new_custom_fields.items():
