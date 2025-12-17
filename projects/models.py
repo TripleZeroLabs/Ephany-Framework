@@ -1,5 +1,6 @@
 from django.db import models
 from django.utils import timezone
+import datetime
 
 class Project(models.Model):
     job_id = models.CharField(max_length=100, unique=True, verbose_name="Job ID")
@@ -20,7 +21,7 @@ class Snapshot(models.Model):
     project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name='snapshots')
     name = models.CharField(max_length=255)
     # defaults to now, but can be edited
-    date = models.DateTimeField(default=timezone.now)
+    date = models.DateField(default=datetime.date.today)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
