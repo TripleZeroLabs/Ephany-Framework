@@ -1,8 +1,10 @@
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
+from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
 from rest_framework.response import Response
 from rest_framework.filters import SearchFilter, OrderingFilter
 from django_filters.rest_framework import DjangoFilterBackend
+
 from .models import Manufacturer, Asset, AssetCategory, AssetFile
 from .serializers import (
     ManufacturerSerializer,
@@ -51,6 +53,9 @@ class AssetViewSet(viewsets.ModelViewSet):
     queryset = Asset.objects.all()
     serializer_class = AssetSerializer
 
+    # Enable file uploads
+    parser_classes = (MultiPartParser, FormParser, JSONParser)
+
     # Configuration for filtering and searching
     filter_backends = [DjangoFilterBackend, SearchFilter]
 
@@ -72,6 +77,10 @@ class AssetViewSet(viewsets.ModelViewSet):
         "manufacturer__name",
     ]
 
+    def update(self, request, *args, **kwargs):
+        print("DEBUG FILES:", request.FILES)  # <--- Check console. Is this empty?
+        return super().update(request, *args, **kwargs)
+
     @action(detail=False, methods=['get'])
     def all_categories(self, request):
         """
@@ -90,7 +99,5 @@ class AssetViewSet(viewsets.ModelViewSet):
         Endpoint: /api/assets/all_manufacturers/
         """
         manufacturers = Manufacturer.objects.all().order_by('name')
-        # We can reuse the existing ManufacturerSerializer
-        # (though it now includes logo/url, which is fine for dropdowns too, or you could make a simpler one)
         serializer = ManufacturerSerializer(manufacturers, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)

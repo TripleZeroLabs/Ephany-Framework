@@ -148,6 +148,13 @@ MEDIA_ROOT = BASE_DIR / 'media'
 
 # REST API settings
 REST_FRAMEWORK = {
+    'DEFAULT_PARSER_CLASSES': [
+        'rest_framework.parsers.JSONParser',
+
+        # For file uploads:
+        'rest_framework.parsers.MultiPartParser',  # Handles the file
+        'rest_framework.parsers.FormParser',  # Handles the form data
+    ],
     "DEFAULT_RENDERER_CLASSES": [
         "rest_framework.renderers.JSONRenderer",
         "rest_framework.renderers.BrowsableAPIRenderer",

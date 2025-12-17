@@ -47,6 +47,12 @@ class AssetFileSerializer(serializers.ModelSerializer):
         fields = ['id', 'file', 'category', 'category_display', 'uploaded_at']
 
 
+from rest_framework import serializers
+from .models import Asset, AssetFile, AssetAttribute  # Adjust imports as needed
+
+
+# from .utils import UnitConverter # Assuming this exists based on your code
+
 class AssetSerializer(serializers.ModelSerializer):
     """
     Primary serializer for Asset instances, handling complex logic like
@@ -54,8 +60,6 @@ class AssetSerializer(serializers.ModelSerializer):
     """
     manufacturer_name = serializers.CharField(source='manufacturer.name', read_only=True)
     category_name = serializers.CharField(source='category.name', read_only=True)
-    # If you want the full category object as read-only, you can optionally expose:
-    # category_detail = AssetCategorySerializer(source='category', read_only=True)
 
     files = AssetFileSerializer(many=True, read_only=True)
     file_ids = serializers.PrimaryKeyRelatedField(
@@ -82,11 +86,11 @@ class AssetSerializer(serializers.ModelSerializer):
             'manufacturer_name',
             'category',
             'category_name',
-            # 'category_detail',
             'model',
             'name',
             'description',
             'url',
+            'catalog_img',  # <--- ADDED THIS FIELD
             'overall_height',
             'overall_width',
             'overall_depth',
@@ -188,24 +192,42 @@ class AssetSerializer(serializers.ModelSerializer):
         return ret
 
     def to_internal_value(self, data):
-        """
-        Converts dimensional data from the user-specified input units (WRITE)
-        into the system's metric storage format.
-        """
-        mutable_data = data.copy()
+        # 1. Create a standard mutable Python dictionary
+        # We use .dict() if available (QueryDict), otherwise cast to dict or copy
+        if hasattr(data, 'dict'):
+            mutable_data = data.dict()
+        else:
+            # If it's a generic dict, copy it.
+            # If it's immutable (rare here), dict() casts it safely.
+            mutable_data = dict(data)
+
+        # 2. FORCE-MERGE FILES
+        # The 'data' object passed here often strips file objects in subtle ways
+        # when copied. We fetch the raw file objects from the request context
+        # and overwrite whatever is in mutable_data.
+        request = self.context.get('request')
+        if request and request.FILES:
+            for key, file_obj in request.FILES.items():
+                mutable_data[key] = file_obj
+
+        # ... (Your existing Input Units logic) ...
+
+        # NOTE: If input_units is being sent as a JSON string inside multipart form,
+        # you might need to parse it here. But for image uploads, it's usually None.
         input_units = mutable_data.get('input_units')
 
         required_categories = set()
 
-        # 1. Identify Categories involved in Standard Fields
+        # 3. Identify Categories (Standard Fields)
         for field in ['overall_height', 'overall_width', 'overall_depth']:
             if field in mutable_data and mutable_data[field] is not None:
                 required_categories.add('length')
 
-        # 2. Identify Categories involved in Custom Fields
+        # 4. Identify Categories (Custom Fields)
         custom_fields = mutable_data.get('custom_fields')
         custom_attr_map = {}
 
+        # Handle custom_fields if they came in (careful with parsing if multipart)
         if custom_fields and isinstance(custom_fields, dict):
             attributes = AssetAttribute.objects.filter(name__in=custom_fields.keys())
             for attr in attributes:
@@ -215,9 +237,11 @@ class AssetSerializer(serializers.ModelSerializer):
                         required_categories.add(category)
                     custom_attr_map[attr.name] = category
 
-        # 3. Validate input_units presence and correctness
+        # 5. Validate input_units
         if required_categories:
             if not input_units or not isinstance(input_units, dict):
+                # If doing a pure file upload, we usually want to skip this validation
+                # unless dimensional data was actually provided.
                 raise serializers.ValidationError({
                     "input_units": (
                         "This field is required because you provided dimensional data. "
@@ -225,6 +249,7 @@ class AssetSerializer(serializers.ModelSerializer):
                     )
                 })
 
+            # ... (Rest of your unit validation logic) ...
             missing_units = [cat for cat in required_categories if cat not in input_units]
             if missing_units:
                 raise serializers.ValidationError({
@@ -242,7 +267,7 @@ class AssetSerializer(serializers.ModelSerializer):
                             )
                         })
 
-        # 4. Perform Conversion (Input Units -> Storage Units)
+        # 6. Perform Conversion
         if required_categories:
             # Standard fields
             for field in ['overall_height', 'overall_width', 'overall_depth']:
