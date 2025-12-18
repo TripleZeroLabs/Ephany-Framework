@@ -40,6 +40,7 @@ class AssetFileSerializer(serializers.ModelSerializer):
 class AssetSerializer(serializers.ModelSerializer):
     """
     Primary serializer for Asset instances.
+    Handles unit conversion (metric/imperial) based on user settings.
     """
     # --- READ FIELDS ---
     manufacturer = ManufacturerSerializer(read_only=True)
@@ -225,13 +226,11 @@ class AssetSerializer(serializers.ModelSerializer):
             for key, file_obj in request.FILES.items():
                 mutable_data[key] = file_obj
 
-        # --- FIX: Helper to parse JSON strings from Multipart Forms ---
-        # This ensures custom_fields is a Dict before we try to process units
+        # Helper to parse JSON strings from Multipart Forms
         if 'custom_fields' in mutable_data and isinstance(mutable_data['custom_fields'], str):
             try:
                 mutable_data['custom_fields'] = json.loads(mutable_data['custom_fields'])
             except ValueError:
-                # Let standard validation catch the invalid JSON later
                 pass
 
         if 'input_units' in mutable_data and isinstance(mutable_data['input_units'], str):
@@ -239,7 +238,6 @@ class AssetSerializer(serializers.ModelSerializer):
                 mutable_data['input_units'] = json.loads(mutable_data['input_units'])
             except ValueError:
                 pass
-        # ----------------------------------------------------------------
 
         units_payload = mutable_data.get('input_units')
         required_categories = set()
@@ -251,7 +249,6 @@ class AssetSerializer(serializers.ModelSerializer):
         custom_fields = mutable_data.get('custom_fields')
         custom_attr_map = {}
 
-        # Because we force-parsed JSON above, this check now works for both JSON and Multipart requests
         if custom_fields and isinstance(custom_fields, dict):
             attributes = AssetAttribute.objects.filter(name__in=custom_fields.keys())
             for attr in attributes:

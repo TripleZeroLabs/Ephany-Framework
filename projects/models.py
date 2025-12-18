@@ -1,31 +1,42 @@
 from django.db import models
-from django.utils import timezone
-import datetime
+from assets.models import Asset
+
 
 class Project(models.Model):
-    job_id = models.CharField(max_length=100, unique=True, verbose_name="Job ID")
-    name = models.CharField(max_length=255)
-    description = models.TextField(blank=True)
-    # Adding timestamps is highly recommended for sorting logic
+    job_id = models.CharField(max_length=50, unique=True)
+    name = models.CharField(max_length=200)
+    description = models.TextField(blank=True, null=True)
+    portfolio_img = models.ImageField(upload_to='project_thumbnails/', blank=True, null=True)
+
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
-    class Meta:
-        ordering = ['job_id']  # Default ordering for stable pagination
-
     def __str__(self):
-        return f"{self.name} ({self.job_id})"
+        return f"{self.job_id} - {self.name}"
 
 
 class Snapshot(models.Model):
-    project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name='snapshots')
-    name = models.CharField(max_length=255)
-    # defaults to now, but can be edited
-    date = models.DateField(default=datetime.date.today)
-    created_at = models.DateTimeField(auto_now_add=True)
+    project = models.ForeignKey(Project, related_name='snapshots', on_delete=models.CASCADE)
+    name = models.CharField(max_length=200)
+    date = models.DateField()
 
-    class Meta:
-        ordering = ['-date']  # Newest snapshots first by default
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+
+class AssetInstance(models.Model):
+    """
+    An occurrence of a library Asset within a specific Snapshot of a Project.
+    """
+    snapshot = models.ForeignKey(Snapshot, related_name='instances', on_delete=models.CASCADE)
+    asset = models.ForeignKey(Asset, related_name='instances', on_delete=models.PROTECT)
+
+    # This is where the "1995 folders" die.
+    # Store 'Location', 'System', 'Tag Number', etc., here.
+    custom_fields = models.JSONField(default=dict, blank=True)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        return f"{self.name} - {self.project.name}"
+        return f"{self.asset.name} in {self.snapshot.project.name}"

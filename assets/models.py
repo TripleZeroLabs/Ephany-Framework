@@ -69,35 +69,52 @@ class AssetAttribute(models.Model):
 
     class UnitType(models.TextChoices):
         NONE = 'none', 'No Unit (Text/Bool/Int)'
-        
+
         # --- 1D: Linear Dimensions ---
         LENGTH = 'autodesk.spec.aec:length-2.0.0', 'Length'
         DISTANCE = 'autodesk.spec.aec:distance-1.0.0', 'Distance'
-        
+
         # --- 2D: Surfaces ---
         AREA = 'autodesk.spec.aec:area-2.0.0', 'Area'
-        
+
         # --- 3D: Space & Mass ---
         VOLUME = 'autodesk.spec.aec:volume-2.0.0', 'Volume'
         MASS = 'autodesk.spec.aec:mass-2.0.0', 'Mass / Weight'
         DENSITY = 'autodesk.spec.aec:massDensity-2.0.0', 'Density'
-        
+
         # --- Geometry / Orientation ---
         ANGLE = 'autodesk.spec.aec:angle-2.0.0', 'Angle'
         SLOPE = 'autodesk.spec.aec:slope-2.0.0', 'Slope'
-        
+
         # --- Generic Numbers ---
         NUMBER = 'autodesk.spec.aec:number-2.0.0', 'Number (Unitless)'
 
-    name = models.CharField(max_length=50,
-                            unique=True,
-                            help_text="Key name. Must be lowercase, use underscores, and have no special characters (e.g., 'material_finish').")
+    # NEW: Scope Definition
+    class AttributeScope(models.TextChoices):
+        TYPE = 'type', 'Asset Type (Catalog)'  # e.g., Voltage, Manufacturer Warranty
+        INSTANCE = 'instance', 'Asset Instance (Project)'  # e.g., Serial Number, Install Date
+        BOTH = 'both', 'Both'  # Rare, but allows flexibility
+
+    name = models.CharField(
+        max_length=50,
+        unique=True,
+        help_text="Key name. Must be lowercase, use underscores, and have no special characters (e.g., 'material_finish')."
+    )
+
+    scope = models.CharField(
+        max_length=20,
+        choices=AttributeScope.choices,
+        default=AttributeScope.TYPE,
+        help_text="Determines if this field appears on the generic Catalog definition or the specific Project Instance."
+    )
+
     data_type = models.CharField(
         max_length=10,
         choices=AttributeType.choices,
         default=AttributeType.STRING,
         help_text="Enforce a specific data type for this attribute"
     )
+
     unit_type = models.CharField(
         max_length=100,
         choices=UnitType.choices,
@@ -118,7 +135,8 @@ class AssetAttribute(models.Model):
         ordering = ['name']
 
     def __str__(self):
-        return f"{self.name} ({self.get_data_type_display()})"
+        # Updated string representation to help admins distinguish scopes quickly
+        return f"{self.name} ({self.get_scope_display()})"
 
 
 class Asset(models.Model):
@@ -202,3 +220,34 @@ class Asset(models.Model):
 
     def __str__(self):
         return f"{self.manufacturer.name} {self.model} ({self.type_id})"
+
+class Vendor(models.Model):
+    name = models.CharField(max_length=255)
+    website = models.URLField(blank=True)
+    contact_email = models.EmailField(blank=True)
+
+    def __str__(self):
+        return self.name
+
+class VendorProduct(models.Model):
+    """
+    Represents the commercial details of an Asset when sold by a specific Vendor.
+    """
+    asset = models.ForeignKey(Asset, on_delete=models.CASCADE, related_name='vendor_products')
+    vendor = models.ForeignKey(Vendor, on_delete=models.CASCADE, related_name='products')
+
+    # Commercial Data
+    sku = models.CharField(max_length=100, blank=True, help_text="Vendor's internal SKU")
+    cost = models.DecimalField(max_digits=12, decimal_places=2, help_text="Current market price")
+    lead_time_days = models.PositiveIntegerField(default=0, help_text="Estimated lead time in days")
+
+    # Optional: Link to the specific product page on vendor site
+    url = models.URLField(blank=True)
+
+    class Meta:
+        unique_together = ['asset', 'vendor']
+        verbose_name = "Vendor Product"
+        verbose_name_plural = "Vendor Products"
+
+    def __str__(self):
+        return f"{self.vendor.name} - {self.asset.name} (${self.cost})"

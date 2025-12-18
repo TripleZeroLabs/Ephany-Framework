@@ -5,7 +5,7 @@ from rest_framework.response import Response
 from rest_framework.filters import SearchFilter, OrderingFilter
 from django_filters.rest_framework import DjangoFilterBackend
 
-from .models import Manufacturer, Asset, AssetCategory, AssetFile
+from .models import Manufacturer, Asset, AssetAttribute, AssetCategory, AssetFile
 from .serializers import (
     ManufacturerSerializer,
     AssetSerializer,
@@ -37,6 +37,23 @@ class ManufacturerViewSet(viewsets.ModelViewSet):
     # Default ordering and allowed ordering fields
     ordering_fields = ['name']
     ordering = ['name']
+
+
+class AssetAttributeViewSet(viewsets.ReadOnlyModelViewSet):
+    """
+    Read-only endpoint to fetch available custom attributes.
+    Frontend uses this to populate the 'Custom Fields' selection list.
+    """
+    queryset = AssetAttribute.objects.all().order_by('name')
+    # You can define a simple inline serializer or add one to serializers.py
+    # Here is a simple inline definition for convenience:
+    from rest_framework import serializers
+    class AttributeSerializer(serializers.ModelSerializer):
+        class Meta:
+            model = AssetAttribute
+            fields = ['id', 'name', 'unit_type']
+
+    serializer_class = AttributeSerializer
 
 
 class AssetCategoryViewSet(viewsets.ModelViewSet):
