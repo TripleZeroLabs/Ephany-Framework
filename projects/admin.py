@@ -4,8 +4,7 @@ from .models import Project, Snapshot, AssetInstance
 class AssetInstanceInline(admin.TabularInline):
     model = AssetInstance
     extra = 0
-    # We removed lineage_id, so we only show the core fields here
-    fields = ('asset', 'custom_fields')
+    fields = ('asset', 'location', 'custom_fields')
 
 @admin.register(Project)
 class ProjectAdmin(admin.ModelAdmin):
@@ -14,7 +13,6 @@ class ProjectAdmin(admin.ModelAdmin):
 
 @admin.register(Snapshot)
 class SnapshotAdmin(admin.ModelAdmin):
-    # Removed 'is_locked' as it is not in your current model
     list_display = ('name', 'project', 'date', 'created_at')
     list_filter = ('project', 'date')
     search_fields = ('name', 'project__name')
@@ -22,8 +20,7 @@ class SnapshotAdmin(admin.ModelAdmin):
 
 @admin.register(AssetInstance)
 class AssetInstanceAdmin(admin.ModelAdmin):
-    # Removed 'location' because that now lives inside the 'custom_fields' JSON
-    list_display = ('asset', 'get_project_name', 'snapshot', 'created_at')
+    list_display = ('asset', 'location', 'get_project_name', 'snapshot')
     list_filter = ('snapshot__project', 'snapshot')
     search_fields = ('asset__name', 'snapshot__name', 'snapshot__project__name')
 

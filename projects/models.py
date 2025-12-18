@@ -32,7 +32,8 @@ class AssetInstance(models.Model):
     asset = models.ForeignKey(Asset, related_name='instances', on_delete=models.PROTECT)
 
     # This is where the "1995 folders" die.
-    # Store 'Location', 'System', 'Tag Number', etc., here.
+    # Store 'Location', 'System', 'Tag Number', etc., here.'
+    location = models.CharField(max_length=200, blank=True, null=True)
     custom_fields = models.JSONField(default=dict, blank=True)
 
     created_at = models.DateTimeField(auto_now_add=True)

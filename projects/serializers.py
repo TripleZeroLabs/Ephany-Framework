@@ -13,8 +13,10 @@ class AssetInstanceSerializer(serializers.ModelSerializer):
             'snapshot',
             'asset',
             'asset_details',
+            'location',
             'custom_fields',
-            'created_at'
+            'created_at',
+            'updated_at'
         ]
 
 
