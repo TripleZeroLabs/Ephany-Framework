@@ -34,7 +34,7 @@ class AssetVendorProductInline(admin.TabularInline):
 
 @admin.register(Asset)
 class AssetAdmin(admin.ModelAdmin):
-    list_display = ('type_id', 'manufacturer', 'model', 'category')
+    list_display = ('type_id', 'manufacturer', 'model', 'category', 'name')
     search_fields = ('type_id', 'model', 'manufacturer__name', 'name')
     list_filter = ('category', 'manufacturer')
     filter_horizontal = ('files',)
