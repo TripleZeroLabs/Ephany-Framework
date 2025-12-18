@@ -33,6 +33,7 @@ class AssetInstance(models.Model):
 
     # This is where the "1995 folders" die.
     # Store 'Location', 'System', 'Tag Number', etc., here.'
+    instance_id = models.CharField(max_length=100, blank=True, null=True)
     location = models.CharField(max_length=200, blank=True, null=True)
     custom_fields = models.JSONField(default=dict, blank=True)
 

@@ -22,4 +22,4 @@ class AssetInstanceViewSet(viewsets.ModelViewSet):
     filter_backends = [DjangoFilterBackend, SearchFilter]
     # filter by snapshot to see the "state" of the project at that time
     filterset_fields = ['snapshot', 'asset']
-    search_fields = ['asset__name', 'asset__model', 'custom_fields']
+    search_fields = ['asset__name', 'asset__model', 'instance_id', 'custom_fields']

@@ -4,7 +4,7 @@ from .models import Project, Snapshot, AssetInstance
 class AssetInstanceInline(admin.TabularInline):
     model = AssetInstance
     extra = 0
-    fields = ('asset', 'location', 'custom_fields')
+    fields = ('instance_id', 'asset', 'location', 'custom_fields')
 
 @admin.register(Project)
 class ProjectAdmin(admin.ModelAdmin):
@@ -20,9 +20,9 @@ class SnapshotAdmin(admin.ModelAdmin):
 
 @admin.register(AssetInstance)
 class AssetInstanceAdmin(admin.ModelAdmin):
-    list_display = ('asset', 'location', 'get_project_name', 'snapshot')
+    list_display = ('asset', 'location', 'instance_id', 'get_project_name', 'snapshot')
     list_filter = ('snapshot__project', 'snapshot')
-    search_fields = ('asset__name', 'snapshot__name', 'snapshot__project__name')
+    search_fields = ('asset__name', 'instance_id', 'snapshot__name', 'snapshot__project__name')
 
     # Helper method to show project name in the list view
     def get_project_name(self, obj):

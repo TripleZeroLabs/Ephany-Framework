@@ -12,6 +12,7 @@ class AssetInstanceSerializer(serializers.ModelSerializer):
             'id',
             'snapshot',
             'asset',
+            'instance_id',
             'asset_details',
             'location',
             'custom_fields',
