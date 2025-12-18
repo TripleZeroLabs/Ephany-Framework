@@ -136,7 +136,9 @@ If authentication is required but missing or invalid, the API returns:
 
 ## API Usage Example
 
-The framework exposes a powerful REST API. Here is an example of how to search for assets by **Manufacturer Name** using a standard HTTP GET request.
+The framework exposes a powerful REST API. Below is an example of how to search for assets by **Manufacturer Name** using a standard HTTP GET request.
+
+Full API Documentation (in progress): https://documenter.getpostman.com/view/37222443/2sB3dVNnDe
 
 ### Request
 
