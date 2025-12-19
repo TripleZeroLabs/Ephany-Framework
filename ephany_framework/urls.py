@@ -37,7 +37,6 @@ router.register(r'files', AssetFileViewSet)
 # === PROJECTS (Execution) ===
 router.register(r'projects', ProjectViewSet)
 router.register(r'snapshots', SnapshotViewSet)
-# This endpoint now manages the actual occurrences of assets within snapshots
 router.register(r'instances', AssetInstanceViewSet)
 
 # === USERS ===
