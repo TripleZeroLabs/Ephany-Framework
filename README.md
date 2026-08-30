@@ -138,56 +138,88 @@ described accurately, which keeps the committed spec honest.
 
 ---
 
-## API Key Authentication
+## Authentication
 
-Ephany Framework includes a lightweight API key authentication layer that is **disabled by default** for easy development and onboarding.  
-When enabled, any request to protected API routes (such as `/api/...`) must include a valid API key.
+Every request is identified in one place — a DRF authentication layer — and
+authorized by one permission class. There are three ways to prove who you are,
+and they all work at the same time:
 
-### Enabling API Key Authentication
+| Credential | Header | Who it is for |
+| --- | --- | --- |
+| API key | `X-API-Key: <key>` | A machine client: a plugin, a CLI, a frontend build |
+| Auth token | `Authorization: Token <token>` | A user-scoped client |
+| Session cookie | — | A browser: the admin and the browsable API |
 
-Set the environment variable:
+### Anonymous access
+
+On a fresh clone the API answers unauthenticated requests, so the examples
+below work immediately:
 
 ```
-API_KEY_AUTH_ENABLED=true
+curl http://127.0.0.1:8000/api/assets/
 ```
 
-(When absent or set to `false`, the API is open for development.)
+That is controlled by `API_ALLOW_ANONYMOUS`, which **defaults to `DJANGO_DEBUG`**.
+Deploy with `DJANGO_DEBUG=False` and the API requires a credential; you do not
+have to remember to close it.
 
-### Creating an API Key
+You can set `API_ALLOW_ANONYMOUS=true` explicitly to run a genuinely public
+API. Because that is rarely what anyone wants by accident,
+`python manage.py check --deploy` warns (`access.W001`) whenever it is on while
+`DEBUG` is off. Add that command to your release step.
 
-Use the built-in management command:
+### Creating an API key
 
 ```
 python manage.py create_apikey "Local Dev"
 ```
-
-This will output a new key, for example:
 
 ```
 API key (store this somewhere safe):
 abc123xyz...
 ```
 
-### Using the API Key
-
-All clients must send the key using the HTTP header:
-
-```
-X-API-Key: <your-key>
-```
-
-Example using `curl`:
+Use it on any request:
 
 ```
 curl -H "X-API-Key: abc123xyz" http://127.0.0.1:8000/api/assets/
 ```
 
-### Authentication Errors
+Keys are accepted whether or not anonymous access is open, so turning anonymous
+access off never breaks an integration that already sends one.
 
-If authentication is required but missing or invalid, the API returns:
+An API key identifies an *integration*, not a person — there is no Django user
+behind it, and `request.user` stays anonymous. If you need per-key permissions
+or write attribution later, add a nullable `user` foreign key to `APIClient`
+and return it from `access/authentication.py`; nothing else has to change.
 
-* `401 Unauthorized` – API key is missing  
-* `403 Forbidden` – API key is invalid or inactive  
+Send keys in the header only. The `?api_key=` query parameter is not supported,
+because credentials in a URL end up in access logs, browser history, and
+`Referer` headers.
+
+### Obtaining an auth token
+
+```
+curl -X POST http://127.0.0.1:8000/api/login/ \
+  -H "Content-Type: application/json" \
+  -d '{"username": "you", "password": "your-password"}'
+```
+
+```json
+{"token": "9944b09...", "user_id": 1, "email": "you@example.com"}
+```
+
+`/api/login/` and the schema and docs routes are always reachable without
+credentials — they declare that on the view itself, so there is no list of
+exempt URL paths to keep in sync.
+
+### Authentication errors
+
+* `401 Unauthorized` — no credential was supplied, and anonymous access is off
+* `403 Forbidden` — a credential was supplied but is invalid, inactive, or not permitted
+
+The split is deliberate: it tells a caller whether to add a credential or fix
+the one they already have.
 
 ---
 
@@ -204,7 +236,8 @@ The framework exposes a powerful REST API. Below is an example of how to search 
 curl -X GET "http://127.0.0.1:8000/api/assets/?manufacturer__name__icontains=Sony" -H "Content-Type: application/json"
 ```
 
-If API key authentication is enabled, add:
+This works as-is on a fresh clone. Once anonymous access is off — that is, once
+`DJANGO_DEBUG=False` — add a credential:
 
 ```
 -H "X-API-Key: <your-key>"

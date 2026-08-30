@@ -70,7 +70,6 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
-    'access.middleware.APIKeyMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -164,13 +163,18 @@ REST_FRAMEWORK = {
         "rest_framework.renderers.JSONRenderer",
         "rest_framework.renderers.BrowsableAPIRenderer",
     ],
+    # Tried in order; the first one that recognises the request wins, and any
+    # that does not simply declines. All three compose, so a browser session,
+    # a token, and a machine key are equally first-class.
     'DEFAULT_AUTHENTICATION_CLASSES': [
-        'rest_framework.authentication.TokenAuthentication',  # Checks "Authorization: Token <key>"
-        'rest_framework.authentication.SessionAuthentication',  # For browser admin access
+        'rest_framework.authentication.TokenAuthentication',   # Authorization: Token <key>
+        'access.authentication.APIKeyAuthentication',          # X-API-Key: <key>
+        'rest_framework.authentication.SessionAuthentication',  # Browser session cookie
     ],
 
+    # The single authorization decision for the whole API. See
+    # access/permissions.py for what it allows and why.
     'DEFAULT_PERMISSION_CLASSES': [
-        # 'rest_framework.permissions.IsAuthenticated', # Lock down API by default (optional but recommended)
         'access.permissions.HasAPIKeyOrAuthenticated',
     ],
 
@@ -206,25 +210,8 @@ assets and instances carry `custom_fields` validated against the
         "persistAuthorization": True,
         "displayRequestDuration": True,
     },
-    # The X-API-Key scheme is enforced by access.middleware.APIKeyMiddleware
-    # rather than a DRF authentication class, so drf-spectacular cannot detect
-    # it automatically. Declare it here so it appears in the schema and in the
-    # Swagger UI "Authorize" dialog.
-    "APPEND_COMPONENTS": {
-        "securitySchemes": {
-            "ApiKeyAuth": {
-                "type": "apiKey",
-                "in": "header",
-                "name": "X-API-Key",
-                "description": (
-                    "Required on /api/ routes when API_KEY_AUTH_ENABLED is "
-                    "true. Create a key with: "
-                    "python manage.py create_apikey \"Local Dev\""
-                ),
-            }
-        }
-    },
-    "SECURITY": [{"ApiKeyAuth": []}],
+    # The X-API-Key scheme is derived from the authentication class itself,
+    # via the extension in access/schema.py, so it cannot drift from the code.
     "TAGS": [
         {"name": "assets", "description": "The catalog: what a thing is."},
         {"name": "projects", "description": "The fleet: where things are installed."},
@@ -233,22 +220,22 @@ assets and instances carry `custom_fields` validated against the
     ],
 }
 
-API_KEY_AUTH_ENABLED = os.getenv("API_KEY_AUTH_ENABLED", "False").lower() == "true"
-
-# All paths starting with any of these prefixes will require an API key when enabled
-API_KEY_PROTECTED_PREFIXES = [
-    "/api/",
-]
-# These paths are exempt from requiring an API key.
-# The schema and docs routes describe the API's shape but expose no records.
-# Remove them here if you would rather keep the documentation private too.
-API_KEY_EXEMPT_PATHS = [
-    "/api/login/",
-    "/api/token-auth/",
-    "/api/schema/",
-    "/api/docs/",
-    "/api/redoc/",
-]
+# --- Anonymous API access ---------------------------------------------------
+# May a caller with no credentials at all read and write the API?
+#
+# Defaults to DEBUG: open on a fresh clone so the examples in the README work
+# immediately, closed the moment you deploy with DEBUG=False. Deliberately tied
+# to DEBUG rather than standing alone, so the open case cannot be reached by
+# forgetting to set something.
+#
+# Set it explicitly if you genuinely want a public API. access.checks warns
+# (access.W001) when it is on while DEBUG is off, so that stays a visible
+# decision rather than an accident.
+#
+# Routes that must stay reachable regardless — /api/login/ and the schema and
+# docs endpoints — declare their own AllowAny permission on the view, which is
+# why there is no longer a list of exempt paths to keep in sync here.
+API_ALLOW_ANONYMOUS = os.getenv("API_ALLOW_ANONYMOUS", str(DEBUG)).lower() == "true"
 
 # --- Smartsheet integration -------------------------------------------------
 # Optional. Only used by the `sync_projects_from_smartsheet` and

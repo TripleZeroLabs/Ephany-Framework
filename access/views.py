@@ -15,8 +15,8 @@ from .serializers import AuthTokenResponseSerializer
         '''Returns a DRF auth token for the given credentials. Send it on
 subsequent requests as "Authorization: Token <token>".
 
-This endpoint is always reachable without authentication, including when
-API_KEY_AUTH_ENABLED is true.'''
+This endpoint declares AllowAny, so it stays reachable without credentials
+even when anonymous access to the rest of the API is closed.'''
     ),
     request=AuthTokenSerializer,
     responses={200: AuthTokenResponseSerializer},

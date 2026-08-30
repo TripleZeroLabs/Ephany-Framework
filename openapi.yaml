@@ -95,8 +95,8 @@ paths:
       - assets
       security:
       - tokenAuth: []
-      - cookieAuth: []
       - ApiKeyAuth: []
+      - cookieAuth: []
       responses:
         '200':
           content:
@@ -122,8 +122,8 @@ paths:
         required: true
       security:
       - tokenAuth: []
-      - cookieAuth: []
       - ApiKeyAuth: []
+      - cookieAuth: []
       responses:
         '201':
           content:
@@ -145,8 +145,8 @@ paths:
       - assets
       security:
       - tokenAuth: []
-      - cookieAuth: []
       - ApiKeyAuth: []
+      - cookieAuth: []
       responses:
         '200':
           content:
@@ -179,8 +179,8 @@ paths:
         required: true
       security:
       - tokenAuth: []
-      - cookieAuth: []
       - ApiKeyAuth: []
+      - cookieAuth: []
       responses:
         '200':
           content:
@@ -212,8 +212,8 @@ paths:
               $ref: '#/components/schemas/PatchedAssetRequest'
       security:
       - tokenAuth: []
-      - cookieAuth: []
       - ApiKeyAuth: []
+      - cookieAuth: []
       responses:
         '200':
           content:
@@ -234,8 +234,8 @@ paths:
       - assets
       security:
       - tokenAuth: []
-      - cookieAuth: []
       - ApiKeyAuth: []
+      - cookieAuth: []
       responses:
         '204':
           description: No response body
@@ -316,8 +316,8 @@ paths:
       - assets
       security:
       - tokenAuth: []
-      - cookieAuth: []
       - ApiKeyAuth: []
+      - cookieAuth: []
       responses:
         '200':
           content:
@@ -403,8 +403,8 @@ paths:
       - assets
       security:
       - tokenAuth: []
-      - cookieAuth: []
       - ApiKeyAuth: []
+      - cookieAuth: []
       responses:
         '200':
           content:
@@ -456,8 +456,8 @@ paths:
       - attribute-choices
       security:
       - tokenAuth: []
-      - cookieAuth: []
       - ApiKeyAuth: []
+      - cookieAuth: []
       responses:
         '200':
           content:
@@ -487,8 +487,8 @@ paths:
         required: true
       security:
       - tokenAuth: []
-      - cookieAuth: []
       - ApiKeyAuth: []
+      - cookieAuth: []
       responses:
         '201':
           content:
@@ -514,8 +514,8 @@ paths:
       - attribute-choices
       security:
       - tokenAuth: []
-      - cookieAuth: []
       - ApiKeyAuth: []
+      - cookieAuth: []
       responses:
         '200':
           content:
@@ -552,8 +552,8 @@ paths:
         required: true
       security:
       - tokenAuth: []
-      - cookieAuth: []
       - ApiKeyAuth: []
+      - cookieAuth: []
       responses:
         '200':
           content:
@@ -589,8 +589,8 @@ paths:
               $ref: '#/components/schemas/PatchedAssetAttributeChoiceRequest'
       security:
       - tokenAuth: []
-      - cookieAuth: []
       - ApiKeyAuth: []
+      - cookieAuth: []
       responses:
         '200':
           content:
@@ -615,8 +615,8 @@ paths:
       - attribute-choices
       security:
       - tokenAuth: []
-      - cookieAuth: []
       - ApiKeyAuth: []
+      - cookieAuth: []
       responses:
         '204':
           description: No response body
@@ -655,8 +655,8 @@ paths:
       - attributes
       security:
       - tokenAuth: []
-      - cookieAuth: []
       - ApiKeyAuth: []
+      - cookieAuth: []
       responses:
         '200':
           content:
@@ -685,8 +685,8 @@ paths:
         required: true
       security:
       - tokenAuth: []
-      - cookieAuth: []
       - ApiKeyAuth: []
+      - cookieAuth: []
       responses:
         '201':
           content:
@@ -711,8 +711,8 @@ paths:
       - attributes
       security:
       - tokenAuth: []
-      - cookieAuth: []
       - ApiKeyAuth: []
+      - cookieAuth: []
       responses:
         '200':
           content:
@@ -748,8 +748,8 @@ paths:
         required: true
       security:
       - tokenAuth: []
-      - cookieAuth: []
       - ApiKeyAuth: []
+      - cookieAuth: []
       responses:
         '200':
           content:
@@ -784,8 +784,8 @@ paths:
               $ref: '#/components/schemas/PatchedAssetAttributeRequest'
       security:
       - tokenAuth: []
-      - cookieAuth: []
       - ApiKeyAuth: []
+      - cookieAuth: []
       responses:
         '200':
           content:
@@ -809,8 +809,8 @@ paths:
       - attributes
       security:
       - tokenAuth: []
-      - cookieAuth: []
       - ApiKeyAuth: []
+      - cookieAuth: []
       responses:
         '204':
           description: No response body
@@ -834,8 +834,8 @@ paths:
       - categories
       security:
       - tokenAuth: []
-      - cookieAuth: []
       - ApiKeyAuth: []
+      - cookieAuth: []
       responses:
         '200':
           content:
@@ -861,8 +861,8 @@ paths:
         required: true
       security:
       - tokenAuth: []
-      - cookieAuth: []
       - ApiKeyAuth: []
+      - cookieAuth: []
       responses:
         '201':
           content:
@@ -884,8 +884,8 @@ paths:
       - categories
       security:
       - tokenAuth: []
-      - cookieAuth: []
       - ApiKeyAuth: []
+      - cookieAuth: []
       responses:
         '200':
           content:
@@ -918,8 +918,8 @@ paths:
         required: true
       security:
       - tokenAuth: []
-      - cookieAuth: []
       - ApiKeyAuth: []
+      - cookieAuth: []
       responses:
         '200':
           content:
@@ -951,8 +951,8 @@ paths:
               $ref: '#/components/schemas/PatchedAssetCategoryRequest'
       security:
       - tokenAuth: []
-      - cookieAuth: []
       - ApiKeyAuth: []
+      - cookieAuth: []
       responses:
         '200':
           content:
@@ -973,8 +973,8 @@ paths:
       - categories
       security:
       - tokenAuth: []
-      - cookieAuth: []
       - ApiKeyAuth: []
+      - cookieAuth: []
       responses:
         '204':
           description: No response body
@@ -998,8 +998,8 @@ paths:
       - files
       security:
       - tokenAuth: []
-      - cookieAuth: []
       - ApiKeyAuth: []
+      - cookieAuth: []
       responses:
         '200':
           content:
@@ -1025,8 +1025,8 @@ paths:
         required: true
       security:
       - tokenAuth: []
-      - cookieAuth: []
       - ApiKeyAuth: []
+      - cookieAuth: []
       responses:
         '201':
           content:
@@ -1048,8 +1048,8 @@ paths:
       - files
       security:
       - tokenAuth: []
-      - cookieAuth: []
       - ApiKeyAuth: []
+      - cookieAuth: []
       responses:
         '200':
           content:
@@ -1082,8 +1082,8 @@ paths:
         required: true
       security:
       - tokenAuth: []
-      - cookieAuth: []
       - ApiKeyAuth: []
+      - cookieAuth: []
       responses:
         '200':
           content:
@@ -1115,8 +1115,8 @@ paths:
               $ref: '#/components/schemas/PatchedAssetFileRequest'
       security:
       - tokenAuth: []
-      - cookieAuth: []
       - ApiKeyAuth: []
+      - cookieAuth: []
       responses:
         '200':
           content:
@@ -1137,8 +1137,8 @@ paths:
       - files
       security:
       - tokenAuth: []
-      - cookieAuth: []
       - ApiKeyAuth: []
+      - cookieAuth: []
       responses:
         '204':
           description: No response body
@@ -1181,8 +1181,8 @@ paths:
       - instances
       security:
       - tokenAuth: []
-      - cookieAuth: []
       - ApiKeyAuth: []
+      - cookieAuth: []
       responses:
         '200':
           content:
@@ -1213,8 +1213,8 @@ paths:
         required: true
       security:
       - tokenAuth: []
-      - cookieAuth: []
       - ApiKeyAuth: []
+      - cookieAuth: []
       responses:
         '201':
           content:
@@ -1241,8 +1241,8 @@ paths:
       - instances
       security:
       - tokenAuth: []
-      - cookieAuth: []
       - ApiKeyAuth: []
+      - cookieAuth: []
       responses:
         '200':
           content:
@@ -1280,8 +1280,8 @@ paths:
         required: true
       security:
       - tokenAuth: []
-      - cookieAuth: []
       - ApiKeyAuth: []
+      - cookieAuth: []
       responses:
         '200':
           content:
@@ -1318,8 +1318,8 @@ paths:
               $ref: '#/components/schemas/PatchedAssetInstanceRequest'
       security:
       - tokenAuth: []
-      - cookieAuth: []
       - ApiKeyAuth: []
+      - cookieAuth: []
       responses:
         '200':
           content:
@@ -1345,8 +1345,8 @@ paths:
       - instances
       security:
       - tokenAuth: []
-      - cookieAuth: []
       - ApiKeyAuth: []
+      - cookieAuth: []
       responses:
         '204':
           description: No response body
@@ -1357,8 +1357,8 @@ paths:
         Returns a DRF auth token for the given credentials. Send it on
         subsequent requests as "Authorization: Token <token>".
 
-        This endpoint is always reachable without authentication, including when
-        API_KEY_AUTH_ENABLED is true.
+        This endpoint declares AllowAny, so it stays reachable without credentials
+        even when anonymous access to the rest of the API is closed.
       summary: Exchange username and password for an auth token
       tags:
       - access
@@ -1428,8 +1428,8 @@ paths:
       - manufacturers
       security:
       - tokenAuth: []
-      - cookieAuth: []
       - ApiKeyAuth: []
+      - cookieAuth: []
       responses:
         '200':
           content:
@@ -1458,8 +1458,8 @@ paths:
         required: true
       security:
       - tokenAuth: []
-      - cookieAuth: []
       - ApiKeyAuth: []
+      - cookieAuth: []
       responses:
         '201':
           content:
@@ -1484,8 +1484,8 @@ paths:
       - manufacturers
       security:
       - tokenAuth: []
-      - cookieAuth: []
       - ApiKeyAuth: []
+      - cookieAuth: []
       responses:
         '200':
           content:
@@ -1521,8 +1521,8 @@ paths:
         required: true
       security:
       - tokenAuth: []
-      - cookieAuth: []
       - ApiKeyAuth: []
+      - cookieAuth: []
       responses:
         '200':
           content:
@@ -1557,8 +1557,8 @@ paths:
               $ref: '#/components/schemas/PatchedManufacturerRequest'
       security:
       - tokenAuth: []
-      - cookieAuth: []
       - ApiKeyAuth: []
+      - cookieAuth: []
       responses:
         '200':
           content:
@@ -1582,8 +1582,8 @@ paths:
       - manufacturers
       security:
       - tokenAuth: []
-      - cookieAuth: []
       - ApiKeyAuth: []
+      - cookieAuth: []
       responses:
         '204':
           description: No response body
@@ -1642,8 +1642,8 @@ paths:
       - projects
       security:
       - tokenAuth: []
-      - cookieAuth: []
       - ApiKeyAuth: []
+      - cookieAuth: []
       responses:
         '200':
           content:
@@ -1674,8 +1674,8 @@ paths:
         required: true
       security:
       - tokenAuth: []
-      - cookieAuth: []
       - ApiKeyAuth: []
+      - cookieAuth: []
       responses:
         '201':
           content:
@@ -1702,8 +1702,8 @@ paths:
       - projects
       security:
       - tokenAuth: []
-      - cookieAuth: []
       - ApiKeyAuth: []
+      - cookieAuth: []
       responses:
         '200':
           content:
@@ -1741,8 +1741,8 @@ paths:
         required: true
       security:
       - tokenAuth: []
-      - cookieAuth: []
       - ApiKeyAuth: []
+      - cookieAuth: []
       responses:
         '200':
           content:
@@ -1779,8 +1779,8 @@ paths:
               $ref: '#/components/schemas/PatchedProjectRequest'
       security:
       - tokenAuth: []
-      - cookieAuth: []
       - ApiKeyAuth: []
+      - cookieAuth: []
       responses:
         '200':
           content:
@@ -1806,8 +1806,8 @@ paths:
       - projects
       security:
       - tokenAuth: []
-      - cookieAuth: []
       - ApiKeyAuth: []
+      - cookieAuth: []
       responses:
         '204':
           description: No response body
@@ -1844,8 +1844,8 @@ paths:
       - sites
       security:
       - tokenAuth: []
-      - cookieAuth: []
       - ApiKeyAuth: []
+      - cookieAuth: []
       responses:
         '200':
           content:
@@ -1872,8 +1872,8 @@ paths:
         required: true
       security:
       - tokenAuth: []
-      - cookieAuth: []
       - ApiKeyAuth: []
+      - cookieAuth: []
       responses:
         '201':
           content:
@@ -1896,8 +1896,8 @@ paths:
       - sites
       security:
       - tokenAuth: []
-      - cookieAuth: []
       - ApiKeyAuth: []
+      - cookieAuth: []
       responses:
         '200':
           content:
@@ -1931,8 +1931,8 @@ paths:
         required: true
       security:
       - tokenAuth: []
-      - cookieAuth: []
       - ApiKeyAuth: []
+      - cookieAuth: []
       responses:
         '200':
           content:
@@ -1965,8 +1965,8 @@ paths:
               $ref: '#/components/schemas/PatchedSiteRequest'
       security:
       - tokenAuth: []
-      - cookieAuth: []
       - ApiKeyAuth: []
+      - cookieAuth: []
       responses:
         '200':
           content:
@@ -1988,8 +1988,8 @@ paths:
       - sites
       security:
       - tokenAuth: []
-      - cookieAuth: []
       - ApiKeyAuth: []
+      - cookieAuth: []
       responses:
         '204':
           description: No response body
@@ -2027,8 +2027,8 @@ paths:
       - snapshots
       security:
       - tokenAuth: []
-      - cookieAuth: []
       - ApiKeyAuth: []
+      - cookieAuth: []
       responses:
         '200':
           content:
@@ -2058,8 +2058,8 @@ paths:
         required: true
       security:
       - tokenAuth: []
-      - cookieAuth: []
       - ApiKeyAuth: []
+      - cookieAuth: []
       responses:
         '201':
           content:
@@ -2085,8 +2085,8 @@ paths:
       - snapshots
       security:
       - tokenAuth: []
-      - cookieAuth: []
       - ApiKeyAuth: []
+      - cookieAuth: []
       responses:
         '200':
           content:
@@ -2123,8 +2123,8 @@ paths:
         required: true
       security:
       - tokenAuth: []
-      - cookieAuth: []
       - ApiKeyAuth: []
+      - cookieAuth: []
       responses:
         '200':
           content:
@@ -2160,8 +2160,8 @@ paths:
               $ref: '#/components/schemas/PatchedSnapshotRequest'
       security:
       - tokenAuth: []
-      - cookieAuth: []
       - ApiKeyAuth: []
+      - cookieAuth: []
       responses:
         '200':
           content:
@@ -2186,8 +2186,8 @@ paths:
       - snapshots
       security:
       - tokenAuth: []
-      - cookieAuth: []
       - ApiKeyAuth: []
+      - cookieAuth: []
       responses:
         '204':
           description: No response body
@@ -2211,8 +2211,8 @@ paths:
       - users
       security:
       - tokenAuth: []
-      - cookieAuth: []
       - ApiKeyAuth: []
+      - cookieAuth: []
       responses:
         '200':
           content:
@@ -2238,8 +2238,8 @@ paths:
         required: true
       security:
       - tokenAuth: []
-      - cookieAuth: []
       - ApiKeyAuth: []
+      - cookieAuth: []
       - {}
       responses:
         '201':
@@ -2262,8 +2262,8 @@ paths:
       - users
       security:
       - tokenAuth: []
-      - cookieAuth: []
       - ApiKeyAuth: []
+      - cookieAuth: []
       responses:
         '200':
           content:
@@ -2296,8 +2296,8 @@ paths:
         required: true
       security:
       - tokenAuth: []
-      - cookieAuth: []
       - ApiKeyAuth: []
+      - cookieAuth: []
       responses:
         '200':
           content:
@@ -2329,8 +2329,8 @@ paths:
               $ref: '#/components/schemas/PatchedUserRequest'
       security:
       - tokenAuth: []
-      - cookieAuth: []
       - ApiKeyAuth: []
+      - cookieAuth: []
       responses:
         '200':
           content:
@@ -2351,8 +2351,8 @@ paths:
       - users
       security:
       - tokenAuth: []
-      - cookieAuth: []
       - ApiKeyAuth: []
+      - cookieAuth: []
       responses:
         '204':
           description: No response body
@@ -2396,8 +2396,8 @@ paths:
       - vendor-products
       security:
       - tokenAuth: []
-      - cookieAuth: []
       - ApiKeyAuth: []
+      - cookieAuth: []
       responses:
         '200':
           content:
@@ -2423,8 +2423,8 @@ paths:
         required: true
       security:
       - tokenAuth: []
-      - cookieAuth: []
       - ApiKeyAuth: []
+      - cookieAuth: []
       responses:
         '201':
           content:
@@ -2446,8 +2446,8 @@ paths:
       - vendor-products
       security:
       - tokenAuth: []
-      - cookieAuth: []
       - ApiKeyAuth: []
+      - cookieAuth: []
       responses:
         '200':
           content:
@@ -2480,8 +2480,8 @@ paths:
         required: true
       security:
       - tokenAuth: []
-      - cookieAuth: []
       - ApiKeyAuth: []
+      - cookieAuth: []
       responses:
         '200':
           content:
@@ -2513,8 +2513,8 @@ paths:
               $ref: '#/components/schemas/PatchedVendorProductRequest'
       security:
       - tokenAuth: []
-      - cookieAuth: []
       - ApiKeyAuth: []
+      - cookieAuth: []
       responses:
         '200':
           content:
@@ -2535,8 +2535,8 @@ paths:
       - vendor-products
       security:
       - tokenAuth: []
-      - cookieAuth: []
       - ApiKeyAuth: []
+      - cookieAuth: []
       responses:
         '204':
           description: No response body
@@ -2572,8 +2572,8 @@ paths:
       - vendors
       security:
       - tokenAuth: []
-      - cookieAuth: []
       - ApiKeyAuth: []
+      - cookieAuth: []
       responses:
         '200':
           content:
@@ -2599,8 +2599,8 @@ paths:
         required: true
       security:
       - tokenAuth: []
-      - cookieAuth: []
       - ApiKeyAuth: []
+      - cookieAuth: []
       responses:
         '201':
           content:
@@ -2622,8 +2622,8 @@ paths:
       - vendors
       security:
       - tokenAuth: []
-      - cookieAuth: []
       - ApiKeyAuth: []
+      - cookieAuth: []
       responses:
         '200':
           content:
@@ -2656,8 +2656,8 @@ paths:
         required: true
       security:
       - tokenAuth: []
-      - cookieAuth: []
       - ApiKeyAuth: []
+      - cookieAuth: []
       responses:
         '200':
           content:
@@ -2689,8 +2689,8 @@ paths:
               $ref: '#/components/schemas/PatchedVendorRequest'
       security:
       - tokenAuth: []
-      - cookieAuth: []
       - ApiKeyAuth: []
+      - cookieAuth: []
       responses:
         '200':
           content:
@@ -2711,8 +2711,8 @@ paths:
       - vendors
       security:
       - tokenAuth: []
-      - cookieAuth: []
       - ApiKeyAuth: []
+      - cookieAuth: []
       responses:
         '204':
           description: No response body
@@ -4740,8 +4740,9 @@ components:
       type: apiKey
       in: header
       name: X-API-Key
-      description: 'Required on /api/ routes when API_KEY_AUTH_ENABLED is true. Create
-        a key with: python manage.py create_apikey "Local Dev"'
+      description: 'Identifies a machine client (a plugin, a CLI, a frontend build)
+        rather than a person. Create one with: python manage.py create_apikey "Local
+        Dev"'
     cookieAuth:
       type: apiKey
       in: cookie
