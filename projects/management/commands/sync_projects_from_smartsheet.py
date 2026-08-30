@@ -1,8 +1,12 @@
 """
 projects/management/commands/sync_projects_from_smartsheet.py
 
-One-way sync from Smartsheet sheet 1373395091777412 → Django Project records.
+One-way sync from a Smartsheet sheet → Django Project records.
 Looks up each row by "Project ID" and updates the matching Project in Django.
+
+The sheet is identified by the SMARTSHEET_PROJECTS_SHEET_ID environment
+variable, or by the --sheet-id flag. The column titles below are the ones this
+command expects; edit the mapping dicts to match your own sheet.
 
 Only updates fields that have changed. Skips rows with no matching Project.
 Creates Site records on-the-fly if a Site ID is encountered that doesn't exist yet.
@@ -28,12 +32,17 @@ Column → Django field mapping:
     Vertical                                → custom_fields['vertical']
 
 Usage:
+    export SMARTSHEET_PROJECTS_SHEET_ID=<your-sheet-id>
     python manage.py sync_projects_from_smartsheet <SMARTSHEET_API_KEY> [--dry-run]
+
+    # or, without the environment variable:
+    python manage.py sync_projects_from_smartsheet <API_KEY> --sheet-id <SHEET_ID>
 """
 
 import requests
 from datetime import date, datetime
 
+from django.conf import settings
 from django.core.management.base import BaseCommand, CommandError
 
 from projects.models import Project, Site
@@ -43,7 +52,6 @@ from projects.models import Project, Site
 # ---------------------------------------------------------------------------
 
 SMARTSHEET_BASE = "https://api.smartsheet.com/2.0"
-SHEET_ID = "1373395091777412"
 
 # Smartsheet column title → Django Project direct field name
 DIRECT_FIELDS = {
@@ -146,8 +154,9 @@ def _parse_date(value) -> date | None:
 
 class Command(BaseCommand):
     help = (
-        "Sync Project fields from Smartsheet sheet 1373395091777412 into Django. "
-        "Looks up each row by Project ID and updates the matching Project record."
+        "Sync Project fields from a Smartsheet sheet into Django. "
+        "Looks up each row by Project ID and updates the matching Project record. "
+        "Set SMARTSHEET_PROJECTS_SHEET_ID or pass --sheet-id."
     )
 
     def add_arguments(self, parser):
@@ -155,6 +164,15 @@ class Command(BaseCommand):
             "api_key",
             type=str,
             help="Smartsheet API Bearer token",
+        )
+        parser.add_argument(
+            "--sheet-id",
+            type=str,
+            default=None,
+            help=(
+                "Smartsheet sheet ID to read from. "
+                "Defaults to the SMARTSHEET_PROJECTS_SHEET_ID environment variable."
+            ),
         )
         parser.add_argument(
             "--dry-run",
@@ -167,15 +185,22 @@ class Command(BaseCommand):
         api_key: str = options["api_key"]
         dry_run: bool = options["dry_run"]
 
+        sheet_id: str = options["sheet_id"] or settings.SMARTSHEET_PROJECTS_SHEET_ID
+        if not sheet_id:
+            raise CommandError(
+                "No Smartsheet sheet ID configured. Set SMARTSHEET_PROJECTS_SHEET_ID "
+                "in your .env file, or pass --sheet-id <SHEET_ID>."
+            )
+
         if dry_run:
             self.stdout.write(self.style.WARNING("DRY RUN — no database changes will be made.\n"))
 
         # ------------------------------------------------------------------
         # Fetch sheet
         # ------------------------------------------------------------------
-        self.stdout.write(f"Fetching sheet {SHEET_ID}…")
+        self.stdout.write(f"Fetching sheet {sheet_id}…")
         try:
-            sheet = _get(f"{SMARTSHEET_BASE}/sheets/{SHEET_ID}", api_key)
+            sheet = _get(f"{SMARTSHEET_BASE}/sheets/{sheet_id}", api_key)
         except requests.HTTPError as exc:
             raise CommandError(f"Failed to fetch sheet: {exc}") from exc
 

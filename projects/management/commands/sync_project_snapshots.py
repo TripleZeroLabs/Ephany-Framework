@@ -1,8 +1,12 @@
 """
 projects/management/commands/sync_project_snapshots.py
 
-Imports all sheets from Smartsheet folder 6688410887841668 as Django
-Project + Snapshot records, then populates each Snapshot with AssetInstances.
+Imports all sheets from a Smartsheet folder as Django Project + Snapshot
+records, then populates each Snapshot with AssetInstances.
+
+The folder is identified by the SMARTSHEET_SNAPSHOTS_FOLDER_ID environment
+variable (or --folder-id), and the project-name lookup sheet by
+SMARTSHEET_LOOKUP_SHEET_ID (or --lookup-sheet-id).
 
 Sheet naming convention (underscore-delimited):
     <prefix>_<job_id>_<YYYY-MM-DD>_<snapshot_name>
@@ -12,19 +16,25 @@ Sheet naming convention (underscore-delimited):
     segment[2]  — snapshot date (YYYY-MM-DD)
     segment[3+] — snapshot name (remaining segments joined with '_')
 
-Project names are resolved from a separate lookup sheet (1373395091777412)
-using "Project ID" → "Smartsheet Project Name".
+Project names are resolved from a separate lookup sheet using
+"Project ID" → "Smartsheet Project Name".
 
 Each data row in a sheet contributes N AssetInstance records where N is the
 value in the "Quantity" column (one record per unit).
 
 Usage:
+    export SMARTSHEET_SNAPSHOTS_FOLDER_ID=<your-folder-id>
+    export SMARTSHEET_LOOKUP_SHEET_ID=<your-lookup-sheet-id>
     python manage.py sync_project_snapshots <SMARTSHEET_API_KEY> [--dry-run]
+
+    # or, without the environment variables:
+    python manage.py sync_project_snapshots <API_KEY> --folder-id <FOLDER_ID> --lookup-sheet-id <SHEET_ID>
 """
 
 import requests
 from datetime import date
 
+from django.conf import settings
 from django.core.management.base import BaseCommand, CommandError
 
 from assets.models import Asset
@@ -35,8 +45,6 @@ from projects.models import AssetInstance, Project, Snapshot
 # ---------------------------------------------------------------------------
 
 SMARTSHEET_BASE = "https://api.smartsheet.com/2.0"
-FOLDER_ID = "6688410887841668"
-LOOKUP_SHEET_ID = "1373395091777412"
 
 JPS_PREFIX = "JPS-"
 
@@ -91,8 +99,9 @@ def _normalize_job_id(raw: str) -> str:
 
 class Command(BaseCommand):
     help = (
-        "Sync all sheets in Smartsheet folder 6688410887841668 into Django "
-        "as Project Snapshots with AssetInstances."
+        "Sync all sheets in a Smartsheet folder into Django as Project "
+        "Snapshots with AssetInstances. Set SMARTSHEET_SNAPSHOTS_FOLDER_ID and "
+        "SMARTSHEET_LOOKUP_SHEET_ID, or pass --folder-id / --lookup-sheet-id."
     )
 
     def add_arguments(self, parser):
@@ -100,6 +109,24 @@ class Command(BaseCommand):
             "api_key",
             type=str,
             help="Smartsheet API Bearer token",
+        )
+        parser.add_argument(
+            "--folder-id",
+            type=str,
+            default=None,
+            help=(
+                "Smartsheet folder ID containing the snapshot sheets. "
+                "Defaults to the SMARTSHEET_SNAPSHOTS_FOLDER_ID environment variable."
+            ),
+        )
+        parser.add_argument(
+            "--lookup-sheet-id",
+            type=str,
+            default=None,
+            help=(
+                "Smartsheet sheet ID mapping Project ID to project name. "
+                "Defaults to the SMARTSHEET_LOOKUP_SHEET_ID environment variable."
+            ),
         )
         parser.add_argument(
             "--dry-run",
@@ -112,6 +139,21 @@ class Command(BaseCommand):
         api_key: str = options["api_key"]
         dry_run: bool = options["dry_run"]
 
+        folder_id: str = options["folder_id"] or settings.SMARTSHEET_SNAPSHOTS_FOLDER_ID
+        if not folder_id:
+            raise CommandError(
+                "No Smartsheet folder ID configured. Set SMARTSHEET_SNAPSHOTS_FOLDER_ID "
+                "in your .env file, or pass --folder-id <FOLDER_ID>."
+            )
+
+        lookup_sheet_id: str = options["lookup_sheet_id"] or settings.SMARTSHEET_LOOKUP_SHEET_ID
+        if not lookup_sheet_id:
+            raise CommandError(
+                "No Smartsheet lookup sheet ID configured. Set SMARTSHEET_LOOKUP_SHEET_ID "
+                "(or SMARTSHEET_PROJECTS_SHEET_ID) in your .env file, or pass "
+                "--lookup-sheet-id <SHEET_ID>."
+            )
+
         if dry_run:
             self.stdout.write(self.style.WARNING("DRY RUN — no database changes will be made.\n"))
 
@@ -120,7 +162,7 @@ class Command(BaseCommand):
         # ------------------------------------------------------------------
         self.stdout.write("Loading project name lookup sheet…")
         try:
-            lookup_sheet = _get(f"{SMARTSHEET_BASE}/sheets/{LOOKUP_SHEET_ID}", api_key)
+            lookup_sheet = _get(f"{SMARTSHEET_BASE}/sheets/{lookup_sheet_id}", api_key)
         except requests.HTTPError as exc:
             raise CommandError(f"Failed to fetch lookup sheet: {exc}") from exc
 
@@ -145,9 +187,9 @@ class Command(BaseCommand):
         # ------------------------------------------------------------------
         # 2. Fetch folder contents
         # ------------------------------------------------------------------
-        self.stdout.write(f"Fetching folder {FOLDER_ID}…")
+        self.stdout.write(f"Fetching folder {folder_id}…")
         try:
-            folder = _get(f"{SMARTSHEET_BASE}/folders/{FOLDER_ID}", api_key)
+            folder = _get(f"{SMARTSHEET_BASE}/folders/{folder_id}", api_key)
         except requests.HTTPError as exc:
             raise CommandError(f"Failed to fetch folder: {exc}") from exc
 

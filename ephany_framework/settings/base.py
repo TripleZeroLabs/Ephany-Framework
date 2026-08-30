@@ -188,6 +188,22 @@ API_KEY_EXEMPT_PATHS = [
     "/api/token-auth/",
 ]
 
+# --- Smartsheet integration -------------------------------------------------
+# Optional. Only used by the `sync_projects_from_smartsheet` and
+# `sync_project_snapshots` management commands. Leave unset if you do not use
+# Smartsheet; the commands will tell you which variable to set.
+#
+# SMARTSHEET_PROJECTS_SHEET_ID  Sheet holding one row per project.
+# SMARTSHEET_SNAPSHOTS_FOLDER_ID  Folder of per-snapshot asset sheets.
+# SMARTSHEET_LOOKUP_SHEET_ID    Sheet mapping Project ID -> project name.
+#                               Defaults to SMARTSHEET_PROJECTS_SHEET_ID.
+SMARTSHEET_PROJECTS_SHEET_ID = os.getenv('SMARTSHEET_PROJECTS_SHEET_ID', '')
+SMARTSHEET_SNAPSHOTS_FOLDER_ID = os.getenv('SMARTSHEET_SNAPSHOTS_FOLDER_ID', '')
+SMARTSHEET_LOOKUP_SHEET_ID = os.getenv(
+    'SMARTSHEET_LOOKUP_SHEET_ID',
+    SMARTSHEET_PROJECTS_SHEET_ID,
+)
+
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173",  # Vite dev server
     "https://ephany.io",
