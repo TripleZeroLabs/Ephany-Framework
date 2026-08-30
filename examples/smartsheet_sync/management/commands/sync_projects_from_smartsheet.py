@@ -1,42 +1,76 @@
 """
-projects/management/commands/sync_projects_from_smartsheet.py
+EXAMPLE INTEGRATION — one-way import from Smartsheet into Django Projects.
 
-One-way sync from a Smartsheet sheet → Django Project records.
-Looks up each row by "Project ID" and updates the matching Project in Django.
+This file is a worked example, not core framework code. It exists to show the
+shape of an importer that keeps a fleet of Project records in sync with an
+external system of record. Read it, copy it, point it at whatever you actually
+use — Airtable, a Google Sheet, a nightly CSV drop, an internal REST API.
+
+## The pattern
+
+Every importer of this kind is the same four steps, and they are marked with
+STEP banners below so you can find the parts you need to change:
+
+    STEP 1  Declare the mapping        which source column feeds which field
+    STEP 2  Fetch the source data      one call, via client.py
+    STEP 3  Diff each row              compare source against the DB
+    STEP 4  Write only what changed    plus a --dry-run that writes nothing
+
+STEP 1 is almost always the only part you rewrite. STEPS 3 and 4 carry the
+logic worth keeping: never write a field that has not changed, never let one
+bad row abort the run, and always offer a dry run.
+
+## Two design choices worth stealing
+
+**Update, never create.** A row with no matching Project is skipped with a
+warning rather than creating one. The Django database stays the authority on
+which projects exist; Smartsheet only supplies details about projects that are
+already known. This makes a typo in the source sheet a logged warning instead
+of a phantom project. `sync_project_snapshots` deliberately makes the opposite
+choice — see its header for why.
+
+**Warn and continue.** An unrecognised status value or an unparseable number
+skips that one field, logs a warning, and moves on. A long import against
+messy human-maintained data should surface every problem in one run, not stop
+at the first.
+
+## Configuration
 
 The sheet is identified by the SMARTSHEET_PROJECTS_SHEET_ID environment
-variable, or by the --sheet-id flag. The column titles below are the ones this
-command expects; edit the mapping dicts to match your own sheet.
+variable (see .env.example), or by the --sheet-id flag. The API key is passed
+as a command argument.
 
-Only updates fields that have changed. Skips rows with no matching Project.
-Creates Site records on-the-fly if a Site ID is encountered that doesn't exist yet.
+## Column mapping
 
-Column → Django field mapping:
-    Project ID                              → job_id  (lookup key)
-    Smartsheet Project Name                 → name
-    Site ID                                 → site    (FK via Site.site_id)
-    Overall Status                          → status  (Blue/Red/Yellow/Green → blue/red/yellow/green)
-    Store Go Live                           → go_live_date
-    Street                                  → address_line1
-    Address 2: Location in Building / Venue → address_line2
-    City                                    → city
-    State/Province                          → state
-    Zip/Postal Code                         → zip_code
-    Country/Territory                       → country
+    Project ID                              -> job_id  (lookup key)
+    Smartsheet Project Name                 -> name
+    Site ID                                 -> site    (FK via Site.site_id)
+    Overall Status                          -> status  (Blue/Red/Yellow/Green)
+    Store Go Live                           -> go_live_date
+    Street                                  -> address_line1
+    Address 2: Location in Building / Venue -> address_line2
+    City                                    -> city
+    State/Province                          -> state
+    Zip/Postal Code                         -> zip_code
+    Country/Territory                       -> country
 
-    Written to custom_fields{}:
-    FCID                                    → custom_fields['fc_id']
-    RI Model                                → custom_fields['ri_model']
-    Vision Only %                           → custom_fields['vo_percentage']  (whole number)
-    Trackable Area                          → custom_fields['trackable_area_planned']
-    Vertical                                → custom_fields['vertical']
+    Written into Project.custom_fields:
+    FCID                                    -> fc_id
+    RI Model                                -> ri_model
+    Vision Only %                           -> vo_percentage  (whole number)
+    Trackable Area                          -> trackable_area_planned
+    Vertical                                -> vertical
 
-Usage:
+Those titles come from one particular Smartsheet. Yours will differ — that is
+the point of STEP 1.
+
+## Usage
+
     export SMARTSHEET_PROJECTS_SHEET_ID=<your-sheet-id>
-    python manage.py sync_projects_from_smartsheet <SMARTSHEET_API_KEY> [--dry-run]
+    python manage.py sync_projects_from_smartsheet <API_KEY> --dry-run
+    python manage.py sync_projects_from_smartsheet <API_KEY>
 
-    # or, without the environment variable:
-    python manage.py sync_projects_from_smartsheet <API_KEY> --sheet-id <SHEET_ID>
+Always dry-run first. It prints exactly what would change and touches nothing.
 """
 
 import requests
@@ -47,13 +81,24 @@ from django.core.management.base import BaseCommand, CommandError
 
 from projects.models import Project, Site
 
+# Everything that knows Smartsheet exists lives in client.py. Swap that module
+# and this command works against a different source unchanged.
+from examples.smartsheet_sync import client
+
 # ---------------------------------------------------------------------------
-# Constants
+# STEP 1 — Declare the mapping
+#
+# This is the part you rewrite for your own source. Each dict below answers
+# one question: which column feeds which Django field, and how is its value
+# translated on the way in?
+#
+# Keeping the mapping as data rather than a wall of if-statements means adding
+# a column is a one-line change, and the whole contract with the external
+# system is readable in one screen.
 # ---------------------------------------------------------------------------
 
-SMARTSHEET_BASE = "https://api.smartsheet.com/2.0"
-
-# Smartsheet column title → Django Project direct field name
+# Source column title → Django Project field name.
+# These are copied straight across as strings, no translation.
 DIRECT_FIELDS = {
     "Smartsheet Project Name":                 "name",
     "Street":                                  "address_line1",
@@ -96,45 +141,39 @@ RI_MODEL_MAP = {
 
 
 # ---------------------------------------------------------------------------
-# Helpers
+# Value coercion
+#
+# Cells arrive loosely typed: a number column may hand you an int, a float, or
+# a string depending on how the value was entered. These two functions absorb
+# that so the diff logic in STEP 3 can compare like with like.
+#
+# Both return a falsy value rather than raising. Coercion failures are not
+# worth aborting an import over — they are logged as warnings at the call site,
+# where there is enough context to name the row and the field.
 # ---------------------------------------------------------------------------
 
-def _headers(api_key: str) -> dict:
-    return {
-        "Authorization": f"Bearer {api_key}",
-        "Content-Type": "application/json",
-    }
-
-
-def _get(url: str, api_key: str) -> dict:
-    resp = requests.get(url, headers=_headers(api_key))
-    resp.raise_for_status()
-    return resp.json()
-
-
-def _column_map(sheet: dict) -> dict:
-    """Return {column_title: column_id} for a sheet response."""
-    return {col["title"]: col["id"] for col in sheet.get("columns", [])}
-
-
-def _cell_value(row: dict, col_map: dict, col_title: str):
-    """Return the raw cell value by column title, or None."""
-    col_id = col_map.get(col_title)
-    if col_id is None:
-        return None
-    cells_by_col = {cell["columnId"]: cell for cell in row.get("cells", [])}
-    return cells_by_col.get(col_id, {}).get("value")
-
-
 def _str(value) -> str:
-    """Coerce a cell value to a stripped string, or empty string."""
+    """
+    Coerce a cell value to a stripped string, or empty string.
+
+    Empty string rather than None because the Django CharFields these feed are
+    declared blank=True, not null=True. Comparing "" to "" keeps the
+    changed-field check in STEP 3 honest; comparing None to "" would report a
+    change on every run.
+    """
     if value is None:
         return ""
     return str(value).strip()
 
 
 def _parse_date(value) -> date | None:
-    """Parse a Smartsheet date cell to a Python date, or None."""
+    """
+    Parse a date cell to a Python date, or None.
+
+    Smartsheet returns dates as ISO strings, but the exact format depends on
+    whether the column is a date or a datetime, so both are tried. An
+    unparseable value becomes None, which the caller treats as "cleared".
+    """
     if value is None:
         return None
     if isinstance(value, (date, datetime)):
@@ -196,16 +235,23 @@ class Command(BaseCommand):
             self.stdout.write(self.style.WARNING("DRY RUN — no database changes will be made.\n"))
 
         # ------------------------------------------------------------------
-        # Fetch sheet
+        # STEP 2 — Fetch the source data
+        #
+        # One call, everything in memory. That is fine for a sheet of a few
+        # thousand rows and keeps this example readable. Against a paginated
+        # API you would loop inside client.fetch(), not here.
+        #
+        # An HTTP failure becomes a CommandError so the user sees one clean
+        # line instead of a traceback.
         # ------------------------------------------------------------------
         self.stdout.write(f"Fetching sheet {sheet_id}…")
         try:
-            sheet = _get(f"{SMARTSHEET_BASE}/sheets/{sheet_id}", api_key)
+            sheet = client.fetch(f"sheets/{sheet_id}", api_key)
         except requests.HTTPError as exc:
             raise CommandError(f"Failed to fetch sheet: {exc}") from exc
 
-        col_map = _column_map(sheet)
-        rows = sheet.get("rows", [])
+        col_map = client.column_map(sheet)
+        rows = client.rows(sheet)
         self.stdout.write(self.style.SUCCESS(f"  {len(rows)} row(s) found.\n"))
 
         # Warn about any expected columns that are missing
@@ -222,7 +268,17 @@ class Command(BaseCommand):
             )
 
         # ------------------------------------------------------------------
-        # Process rows
+        # STEP 3 — Diff each row against the database
+        #
+        # Two dicts accumulate per row: `direct_changes` for real model fields
+        # and `custom_changes` for keys inside the custom_fields JSON blob.
+        # A field is only added when the incoming value actually differs from
+        # what is stored, so a run with no upstream edits writes nothing and
+        # prints nothing.
+        #
+        # The counters exist so the summary at the end can distinguish "the
+        # sheet had nothing new" from "nothing matched and I did nothing" —
+        # two very different outcomes that look identical without them.
         # ------------------------------------------------------------------
         updated = 0
         skipped_no_project = 0
@@ -230,7 +286,7 @@ class Command(BaseCommand):
         warnings = 0
 
         for row in rows:
-            raw_job_id = _cell_value(row, col_map, "Project ID")
+            raw_job_id = client.cell_value(row, col_map, "Project ID")
             if not raw_job_id:
                 skipped_no_id += 1
                 continue
@@ -253,19 +309,19 @@ class Command(BaseCommand):
 
             # ---- Direct string fields ------------------------------------
             for col_title, field_name in DIRECT_FIELDS.items():
-                new_val = _str(_cell_value(row, col_map, col_title))
+                new_val = _str(client.cell_value(row, col_map, col_title))
                 if new_val != getattr(project, field_name, ""):
                     direct_changes[field_name] = new_val
 
             # ---- Custom string fields ------------------------------------
             for col_title, cf_key in CUSTOM_STRING_FIELDS.items():
-                new_val = _str(_cell_value(row, col_map, col_title))
+                new_val = _str(client.cell_value(row, col_map, col_title))
                 current_val = current_cf.get(cf_key, "")
                 if new_val != current_val:
                     custom_changes[cf_key] = new_val
 
             # ---- Site (FK) -----------------------------------------------
-            raw_site_id = _str(_cell_value(row, col_map, "Site ID"))
+            raw_site_id = _str(client.cell_value(row, col_map, "Site ID"))
             if raw_site_id:
                 current_site_id = project.site.site_id if project.site else None
                 if raw_site_id != current_site_id:
@@ -278,7 +334,7 @@ class Command(BaseCommand):
                 direct_changes["site"] = None
 
             # ---- Overall Status ------------------------------------------
-            raw_status = _str(_cell_value(row, col_map, "Overall Status"))
+            raw_status = _str(client.cell_value(row, col_map, "Overall Status"))
             if raw_status:
                 mapped_status = STATUS_MAP.get(raw_status.lower())
                 if mapped_status is None:
@@ -294,7 +350,7 @@ class Command(BaseCommand):
                 direct_changes["status"] = ""
 
             # ---- RI Model → custom_fields['ri_model'] --------------------
-            raw_ri = _str(_cell_value(row, col_map, "RI Model"))
+            raw_ri = _str(client.cell_value(row, col_map, "RI Model"))
             if raw_ri:
                 mapped_ri = RI_MODEL_MAP.get(raw_ri)
                 if mapped_ri is None:
@@ -310,13 +366,13 @@ class Command(BaseCommand):
                 custom_changes["ri_model"] = ""
 
             # ---- Store Go Live -------------------------------------------
-            raw_date = _cell_value(row, col_map, "Store Go Live")
+            raw_date = client.cell_value(row, col_map, "Store Go Live")
             parsed_date = _parse_date(raw_date)
             if parsed_date != project.go_live_date:
                 direct_changes["go_live_date"] = parsed_date
 
             # ---- Vision Only % → custom_fields['vo_percentage'] ----------
-            raw_vo = _cell_value(row, col_map, "Vision Only %")
+            raw_vo = client.cell_value(row, col_map, "Vision Only %")
             if raw_vo is not None:
                 try:
                     vo_int = int(float(raw_vo))
@@ -333,7 +389,7 @@ class Command(BaseCommand):
                 custom_changes["vo_percentage"] = None
 
             # ---- Trackable Area → custom_fields['trackable_area_planned'] -
-            raw_area = _cell_value(row, col_map, "Trackable Area")
+            raw_area = client.cell_value(row, col_map, "Trackable Area")
             if raw_area is not None:
                 try:
                     area_val = float(raw_area)
@@ -349,7 +405,17 @@ class Command(BaseCommand):
             elif current_cf.get("trackable_area_planned") is not None:
                 custom_changes["trackable_area_planned"] = None
 
-            # ---- Apply changes -------------------------------------------
+            # ---- STEP 4 — Write only what changed -------------------------
+            #
+            # Note `update_fields` on the save() below: it emits an UPDATE
+            # touching only the changed columns. That keeps the write small
+            # and, more importantly, avoids clobbering a column that someone
+            # else edited between this command reading and writing.
+            #
+            # In dry-run mode everything above still runs — the fetch, the
+            # diff, the printing — and only this block is skipped. A dry run
+            # that does not exercise the real diff logic is worth very little.
+            # --------------------------------------------------------------
             if not direct_changes and not custom_changes:
                 continue
 
@@ -395,6 +461,10 @@ class Command(BaseCommand):
 
         # ------------------------------------------------------------------
         # Summary
+        #
+        # Always print a summary, even on a clean run. An importer that exits
+        # silently gives you no way to tell success from a misconfigured sheet
+        # ID that matched zero rows.
         # ------------------------------------------------------------------
         self.stdout.write("\n" + "=" * 60)
         self.stdout.write(self.style.SUCCESS("Sync complete."))

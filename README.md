@@ -9,6 +9,7 @@ API designed to be consumed by modern frontend applications (desktop, web, mobil
 *   **Project Tracking:** Manage projects in respect to their relevant assets (per milestone).
 *   **API First:** Fully decoupled architecture using Django REST Framework.
 *   **Self-Describing:** A complete OpenAPI 3 schema is served at `/api/schema/` and committed to the repo as `openapi.yaml`, so clients, SDKs, and coding agents can discover the API without reading the source.
+*   **Worked Examples:** The [`examples/`](examples/) folder ships readable, runnable integrations you can copy and point at your own systems.
 
 ## Tech Stack
 
@@ -235,7 +236,29 @@ If API key authentication is enabled, add:
 ]
 ```
 
-For executable Python scripts and more advanced usage, check out the `support/examples` folder.
+For worked examples — including importing a whole fleet of projects from an external system of record — see the [`examples/`](examples/) folder.
+
+---
+
+## Examples
+
+The [`examples/`](examples/) folder holds complete, runnable integrations that
+exist to be read and copied. Nothing in the core apps depends on them.
+
+`examples/smartsheet_sync/` imports a fleet of projects and their asset
+snapshots from Smartsheet. Smartsheet is incidental — the code is split so that
+one small module knows the external API and everything else is mapping and
+write logic, which is the part that transfers to Airtable, a Google Sheet, a
+nightly CSV drop, or an internal REST API.
+
+Both commands are annotated with `STEP` banners walking through the shape every
+importer of this kind shares: declare the mapping, fetch, diff, write only what
+changed. See [`examples/README.md`](examples/README.md) for the recipe and the
+design decisions worth copying.
+
+```
+python manage.py sync_projects_from_smartsheet <API_KEY> --dry-run
+```
 
 ---
 

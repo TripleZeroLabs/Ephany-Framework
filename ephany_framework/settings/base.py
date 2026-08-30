@@ -61,6 +61,10 @@ INSTALLED_APPS = [
     'drf_spectacular',
     'rest_framework',
     'rest_framework.authtoken',
+    # Example integrations. Nothing in the core apps depends on these; they
+    # ship enabled only so their management commands appear in
+    # `manage.py help`, which is where people find them. See examples/README.md.
+    'examples.smartsheet_sync',
 ]
 
 MIDDLEWARE = [

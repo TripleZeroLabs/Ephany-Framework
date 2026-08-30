@@ -1,34 +1,69 @@
 """
-projects/management/commands/sync_project_snapshots.py
+EXAMPLE INTEGRATION — import a folder of sheets as Project Snapshots.
 
-Imports all sheets from a Smartsheet folder as Django Project + Snapshot
-records, then populates each Snapshot with AssetInstances.
+A second worked example, and a deliberately harder one than
+`sync_projects_from_smartsheet`. Read that file first: it covers the basic
+fetch-map-diff-write shape. This one adds the three things that make real
+importers messy.
 
-The folder is identified by the SMARTSHEET_SNAPSHOTS_FOLDER_ID environment
-variable (or --folder-id), and the project-name lookup sheet by
-SMARTSHEET_LOOKUP_SHEET_ID (or --lookup-sheet-id).
+## What this one adds
 
-Sheet naming convention (underscore-delimited):
+**Many sources, not one.** It walks a folder of sheets rather than reading a
+single sheet, so a partial failure is expected. One unreadable sheet logs a
+warning and the loop continues; it does not abort the other forty.
+
+**Structure encoded in a filename.** Each sheet is named
+
     <prefix>_<job_id>_<YYYY-MM-DD>_<snapshot_name>
 
-    segment[0]  — ignored prefix/category
-    segment[1]  — job_id (normalised to JPS-XXXXX if not already prefixed)
-    segment[2]  — snapshot date (YYYY-MM-DD)
-    segment[3+] — snapshot name (remaining segments joined with '_')
+and STEP 2 pulls the job ID, date, and snapshot name out of it. This is a
+common shape when the external system has no schema for the metadata you need.
+It is also fragile, which is why every parse failure is a skip-with-warning
+rather than an exception — one badly named sheet should not cost you the run.
 
-Project names are resolved from a separate lookup sheet using
-"Project ID" → "Smartsheet Project Name".
+**A second lookup source.** Project names live in a different sheet entirely,
+loaded once up front into a dict rather than re-fetched per row. Same idea as
+any N+1 fix: one query for the lookup table, then in-memory joins.
 
-Each data row in a sheet contributes N AssetInstance records where N is the
-value in the "Quantity" column (one record per unit).
+## The choice that differs from the other example
 
-Usage:
+`sync_projects_from_smartsheet` refuses to create Projects. This command
+creates them freely, because here the folder of sheets *is* the system of
+record for which snapshots exist — there is no prior Django record to match
+against. Decide which side owns the truth before you write an importer; it
+determines whether an unmatched row is an error or an insert.
+
+## Destructive behavior — read before running
+
+Re-importing an existing snapshot DELETES its AssetInstances and rebuilds them
+from the sheet. This is intentional: a snapshot is meant to mirror its sheet
+exactly, and merging would leave behind rows deleted upstream. It also means a
+run against the wrong folder ID will happily wipe good data.
+
+Use --dry-run first. Every time.
+
+## Quantity expansion
+
+A row with Quantity=12 creates twelve AssetInstance records, not one row with
+a quantity field. That is a modelling decision inherited from the schema: each
+instance can carry its own location, instance_id, and custom_fields, which a
+quantity column could not express. Worth understanding before you copy this
+loop — for a source where units are genuinely interchangeable, a quantity
+field on a single row would be the better model.
+
+## Configuration
+
+    SMARTSHEET_SNAPSHOTS_FOLDER_ID   folder of per-snapshot sheets
+    SMARTSHEET_LOOKUP_SHEET_ID       sheet mapping Project ID -> project name
+
+Both are overridable with --folder-id and --lookup-sheet-id. See .env.example.
+
+## Usage
+
     export SMARTSHEET_SNAPSHOTS_FOLDER_ID=<your-folder-id>
     export SMARTSHEET_LOOKUP_SHEET_ID=<your-lookup-sheet-id>
-    python manage.py sync_project_snapshots <SMARTSHEET_API_KEY> [--dry-run]
-
-    # or, without the environment variables:
-    python manage.py sync_project_snapshots <API_KEY> --folder-id <FOLDER_ID> --lookup-sheet-id <SHEET_ID>
+    python manage.py sync_project_snapshots <API_KEY> --dry-run
+    python manage.py sync_project_snapshots <API_KEY>
 """
 
 import requests
@@ -40,19 +75,27 @@ from django.core.management.base import BaseCommand, CommandError
 from assets.models import Asset
 from projects.models import AssetInstance, Project, Snapshot
 
+# Everything that knows Smartsheet exists lives in client.py. Swap that module
+# and this command works against a different source unchanged.
+from examples.smartsheet_sync import client
+
 # ---------------------------------------------------------------------------
-# Constants
+# STEP 1 - Declare the mapping
+#
+# Fewer columns than the other example, because the interesting metadata is
+# encoded in each sheet's *name* rather than its cells. See section 3a below.
 # ---------------------------------------------------------------------------
 
-SMARTSHEET_BASE = "https://api.smartsheet.com/2.0"
-
+# Job IDs in sheet names may or may not carry the prefix. Normalising both
+# forms to one canonical value is what makes the lookup below reliable - a
+# source that is inconsistent about identifiers is the norm, not the exception.
 JPS_PREFIX = "JPS-"
 
-# Column titles expected in project snapshot sheets
-COL_ASSET_ID = "Asset ID"
-COL_QUANTITY = "Quantity"
+# Column titles expected in each per-snapshot sheet.
+COL_ASSET_ID = "Asset ID"      # matched against Asset.type_id in the catalog
+COL_QUANTITY = "Quantity"      # expanded into N AssetInstance rows
 
-# Column titles in the lookup sheet
+# Column titles in the separate lookup sheet.
 COL_PROJECT_ID = "Project ID"
 COL_PROJECT_NAME = "Smartsheet Project Name"
 
@@ -61,34 +104,15 @@ COL_PROJECT_NAME = "Smartsheet Project Name"
 # Helpers
 # ---------------------------------------------------------------------------
 
-def _headers(api_key: str) -> dict:
-    return {
-        "Authorization": f"Bearer {api_key}",
-        "Content-Type": "application/json",
-    }
-
-
-def _get(url: str, api_key: str) -> dict:
-    resp = requests.get(url, headers=_headers(api_key))
-    resp.raise_for_status()
-    return resp.json()
-
-
-def _column_map(sheet: dict) -> dict:
-    """Return {column_title: column_id} for a sheet response."""
-    return {col["title"]: col["id"] for col in sheet.get("columns", [])}
-
-
-def _cell_value(row: dict, col_map: dict, col_title: str):
-    """Return the raw value of a cell by column title, or None."""
-    col_id = col_map.get(col_title)
-    if col_id is None:
-        return None
-    cells_by_col = {cell["columnId"]: cell for cell in row.get("cells", [])}
-    return cells_by_col.get(col_id, {}).get("value")
-
-
 def _normalize_job_id(raw: str) -> str:
+    """
+    Return a job ID in canonical prefixed form.
+
+    Sheet names are maintained by hand, so some carry the prefix and some do
+    not. Normalising on the way in means the lookup dict needs only one key
+    per project. If your own identifiers are inconsistent in a different way,
+    this is the function to replace.
+    """
     raw = raw.strip()
     return raw if raw.startswith(JPS_PREFIX) else f"{JPS_PREFIX}{raw}"
 
@@ -158,15 +182,23 @@ class Command(BaseCommand):
             self.stdout.write(self.style.WARNING("DRY RUN — no database changes will be made.\n"))
 
         # ------------------------------------------------------------------
-        # 1. Load lookup sheet: job_id → project name
+        # STEP 2a - Load the lookup table once
+        #
+        # Fetched once and held in a dict rather than queried per sheet. With
+        # forty sheets in the folder, the per-sheet version would make forty
+        # redundant HTTP calls. Same instinct as avoiding an N+1 query.
+        #
+        # Missing columns here are fatal, unlike almost everywhere else in
+        # this file: without the lookup nothing downstream can resolve, so
+        # failing immediately beats forty identical warnings.
         # ------------------------------------------------------------------
         self.stdout.write("Loading project name lookup sheet…")
         try:
-            lookup_sheet = _get(f"{SMARTSHEET_BASE}/sheets/{lookup_sheet_id}", api_key)
+            lookup_sheet = client.fetch(f"sheets/{lookup_sheet_id}", api_key)
         except requests.HTTPError as exc:
             raise CommandError(f"Failed to fetch lookup sheet: {exc}") from exc
 
-        lookup_col_map = _column_map(lookup_sheet)
+        lookup_col_map = client.column_map(lookup_sheet)
         if COL_PROJECT_ID not in lookup_col_map or COL_PROJECT_NAME not in lookup_col_map:
             raise CommandError(
                 f"Lookup sheet is missing required columns: "
@@ -174,9 +206,9 @@ class Command(BaseCommand):
             )
 
         project_name_by_job_id: dict[str, str] = {}
-        for row in lookup_sheet.get("rows", []):
-            pid = _cell_value(row, lookup_col_map, COL_PROJECT_ID)
-            pname = _cell_value(row, lookup_col_map, COL_PROJECT_NAME)
+        for row in client.rows(lookup_sheet):
+            pid = client.cell_value(row, lookup_col_map, COL_PROJECT_ID)
+            pname = client.cell_value(row, lookup_col_map, COL_PROJECT_NAME)
             if pid and pname:
                 project_name_by_job_id[str(pid).strip()] = str(pname).strip()
 
@@ -185,11 +217,11 @@ class Command(BaseCommand):
         )
 
         # ------------------------------------------------------------------
-        # 2. Fetch folder contents
+        # STEP 2b - List the sheets to import
         # ------------------------------------------------------------------
         self.stdout.write(f"Fetching folder {folder_id}…")
         try:
-            folder = _get(f"{SMARTSHEET_BASE}/folders/{folder_id}", api_key)
+            folder = client.fetch(f"folders/{folder_id}", api_key)
         except requests.HTTPError as exc:
             raise CommandError(f"Failed to fetch folder: {exc}") from exc
 
@@ -201,7 +233,12 @@ class Command(BaseCommand):
         self.stdout.write(self.style.SUCCESS(f"  Found {len(sheets)} sheet(s).\n"))
 
         # ------------------------------------------------------------------
-        # 3. Process each sheet
+        # STEP 3 - Process each sheet independently
+        #
+        # Every failure mode below is a `continue`, never a raise. One sheet
+        # with a malformed name, an unknown project, or a missing column
+        # should cost you that sheet and nothing else. The warning counter in
+        # the summary is how you find out it happened.
         # ------------------------------------------------------------------
         total_projects_created = 0
         total_projects_updated = 0
@@ -217,7 +254,11 @@ class Command(BaseCommand):
             self.stdout.write(f"Processing sheet: {sheet_name}")
 
             # --------------------------------------------------------------
-            # 3a. Parse sheet name
+            # 3a. Parse metadata out of the sheet name
+            #
+            # Fragile by nature: it depends on a naming convention no system
+            # enforces. Hence the length check and the explicit date parse,
+            # both of which skip rather than raise.
             # --------------------------------------------------------------
             segments = sheet_name.split("_")
             if len(segments) < 4:
@@ -285,7 +326,16 @@ class Command(BaseCommand):
                 )
 
             # --------------------------------------------------------------
-            # 3d. Create / overwrite Snapshot
+            # 3d. Create or REBUILD the Snapshot
+            #
+            # The destructive step. An existing snapshot has its instances
+            # deleted and rebuilt, so the snapshot always mirrors the sheet
+            # exactly. Merging instead would strand rows that were deleted
+            # upstream, and a snapshot that quietly disagrees with its source
+            # is worse than no snapshot.
+            #
+            # The delete count is printed because silently discarding rows is
+            # exactly the kind of thing you want to see in a log.
             # --------------------------------------------------------------
             if not dry_run:
                 snapshot, snapshot_created = Snapshot.objects.get_or_create(
@@ -315,7 +365,7 @@ class Command(BaseCommand):
             # 3e. Fetch full sheet data
             # --------------------------------------------------------------
             try:
-                sheet_data = _get(f"{SMARTSHEET_BASE}/sheets/{sheet_id}", api_key)
+                sheet_data = client.fetch(f"sheets/{sheet_id}", api_key)
             except requests.HTTPError as exc:
                 self.stdout.write(
                     self.style.WARNING(f"  SKIP sheet data: HTTP error fetching sheet — {exc}")
@@ -323,7 +373,7 @@ class Command(BaseCommand):
                 total_warnings += 1
                 continue
 
-            col_map = _column_map(sheet_data)
+            col_map = client.column_map(sheet_data)
 
             if COL_ASSET_ID not in col_map:
                 self.stdout.write(
@@ -344,13 +394,18 @@ class Command(BaseCommand):
                 continue
 
             # --------------------------------------------------------------
-            # 3f. Create AssetInstances
+            # 3f. STEP 4 - Expand rows into AssetInstances
+            #
+            # One row with Quantity=N becomes N records, each independently
+            # addressable later. Rows referencing an unknown Asset are skipped
+            # with a warning: the catalog is the authority on what exists, and
+            # a snapshot must not invent assets to satisfy a sheet.
             # --------------------------------------------------------------
             sheet_instances = 0
 
-            for row in sheet_data.get("rows", []):
-                raw_asset_id = _cell_value(row, col_map, COL_ASSET_ID)
-                raw_quantity = _cell_value(row, col_map, COL_QUANTITY)
+            for row in client.rows(sheet_data):
+                raw_asset_id = client.cell_value(row, col_map, COL_ASSET_ID)
+                raw_quantity = client.cell_value(row, col_map, COL_QUANTITY)
 
                 if not raw_asset_id:
                     continue  # blank row — skip silently
