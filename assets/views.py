@@ -3,7 +3,8 @@ from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
 from rest_framework.response import Response
-from rest_framework.filters import SearchFilter, OrderingFilter  # <-- Added OrderingFilter
+from rest_framework.filters import SearchFilter
+from ephany_framework.filters import StableOrderingFilter
 from django_filters.rest_framework import DjangoFilterBackend
 
 from .models import (
@@ -37,8 +38,7 @@ class ManufacturerViewSet(viewsets.ModelViewSet):
     queryset = Manufacturer.objects.all()
     serializer_class = ManufacturerSerializer
 
-    # Add SearchFilter and OrderingFilter
-    filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
+    filter_backends = [DjangoFilterBackend, SearchFilter, StableOrderingFilter]
 
     # Fields for 'DjangoFilterBackend' (exact matches)
     filterset_fields = {
@@ -60,7 +60,7 @@ class AssetAttributeViewSet(viewsets.ModelViewSet):
     """
     queryset = AssetAttribute.objects.prefetch_related('choices').all().order_by('name')
     serializer_class = AssetAttributeSerializer
-    filter_backends = [SearchFilter, OrderingFilter]
+    filter_backends = [SearchFilter, StableOrderingFilter]
     search_fields = ['name']
     ordering_fields = ['name', 'scope', 'data_type']
 
@@ -73,7 +73,7 @@ class AssetAttributeChoiceViewSet(viewsets.ModelViewSet):
     """
     queryset = AssetAttributeChoice.objects.select_related('attribute').all()
     serializer_class = AssetAttributeChoiceSerializer
-    filter_backends = [DjangoFilterBackend, OrderingFilter]
+    filter_backends = [DjangoFilterBackend, StableOrderingFilter]
     filterset_fields = {
         'attribute': ['exact'],
         'attribute__name': ['exact', 'icontains'],
@@ -114,7 +114,7 @@ class AssetViewSet(viewsets.ModelViewSet):
 
     # Configuration for filtering, searching, and sorting
     # Added OrderingFilter here to enable the ?ordering parameter
-    filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
+    filter_backends = [DjangoFilterBackend, SearchFilter, StableOrderingFilter]
 
     # Fielded filtering (allows exact/partial matches on specific fields)
     filterset_fields = {
@@ -176,9 +176,11 @@ class AssetViewSet(viewsets.ModelViewSet):
 
 
 class VendorViewSet(viewsets.ModelViewSet):
-    queryset = Vendor.objects.all().order_by('name')
+    # Ordering comes from Vendor.Meta ('name', 'id'). Vendor.name is not
+    # unique, so ordering by it alone here would leave pagination unstable.
+    queryset = Vendor.objects.all()
     serializer_class = VendorSerializer
-    filter_backends = [SearchFilter, OrderingFilter]
+    filter_backends = [SearchFilter, StableOrderingFilter]
     search_fields = ['name']
     ordering_fields = ['name']
 
@@ -186,7 +188,7 @@ class VendorViewSet(viewsets.ModelViewSet):
 class VendorProductViewSet(viewsets.ModelViewSet):
     queryset = VendorProduct.objects.select_related('asset', 'vendor').all()
     serializer_class = VendorProductSerializer
-    filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
+    filter_backends = [DjangoFilterBackend, SearchFilter, StableOrderingFilter]
     filterset_fields = ['vendor', 'asset']
     search_fields = ['asset__name', 'vendor__name', 'sku']
     ordering_fields = ['vendor__name', 'asset__name', 'cost']

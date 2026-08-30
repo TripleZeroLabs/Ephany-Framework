@@ -33,6 +33,10 @@ class Manufacturer(models.Model):
     url = models.URLField(blank=True, verbose_name="Company Website")
     logo = models.ImageField(upload_to=manufacturer_logo_path, blank=True, null=True)
 
+    class Meta:
+        # name is unique, so this is already a total order.
+        ordering = ['name']
+
     def __str__(self):
         return self.name
 
@@ -59,6 +63,8 @@ class AssetFile(models.Model):
 
     class Meta:
         verbose_name_plural = "Asset Files"
+        # Ends in a unique field so pagination cannot repeat or drop rows.
+        ordering = ['-uploaded_at', 'id']
 
     def __str__(self):
         return f"{self.get_category_display()}: {self.file.name}"
@@ -198,7 +204,10 @@ class AssetAttributeChoice(models.Model):
         unique_together = ['attribute', 'value']
         verbose_name = "Asset Attribute Choice"
         verbose_name_plural = "Asset Attribute Choices"
-        ordering = ['attribute', 'order', 'value']
+        # unique_together already makes this total; id is here so the rule
+        # "ordering ends in a unique field" holds for every model without
+        # having to reason about it.
+        ordering = ['attribute', 'order', 'value', 'id']
 
     def clean(self):
         super().clean()
@@ -322,6 +331,10 @@ class Asset(models.Model):
     custom_fields = models.JSONField(default=dict, blank=True)
     uploaded_at = models.DateTimeField(auto_now_add=True)
 
+    class Meta:
+        # Ends in a unique field so pagination cannot repeat or drop rows.
+        ordering = ['name', 'type_id']
+
     def clean(self):
         """
         Validates 'custom_fields' against the defined AssetAttribute schema.
@@ -417,6 +430,10 @@ class Vendor(models.Model):
     website = models.URLField(blank=True)
     contact_email = models.EmailField(blank=True)
 
+    class Meta:
+        # Ends in a unique field so pagination cannot repeat or drop rows.
+        ordering = ['name', 'id']
+
     def __str__(self):
         return self.name
 
@@ -439,6 +456,8 @@ class VendorProduct(models.Model):
         unique_together = ['asset', 'vendor']
         verbose_name = "Vendor Product"
         verbose_name_plural = "Vendor Products"
+        # No meaningful display order; id keeps it stable without adding joins.
+        ordering = ['id']
 
     def __str__(self):
         return f"{self.vendor.name} - {self.asset.name} (${self.cost})"

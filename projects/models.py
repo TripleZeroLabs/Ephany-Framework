@@ -75,6 +75,10 @@ class Project(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
+    class Meta:
+        # job_id is unique, so this is already a total order.
+        ordering = ['job_id']
+
     def __str__(self):
         return f"{self.job_id} - {self.name}"
 
@@ -86,6 +90,10 @@ class Snapshot(models.Model):
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        # Ends in a unique field so pagination cannot repeat or drop rows.
+        ordering = ['-date', 'id']
 
 
 class AssetInstance(models.Model):
@@ -103,6 +111,10 @@ class AssetInstance(models.Model):
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        # No meaningful display order; id keeps pagination stable.
+        ordering = ['id']
 
     def __str__(self):
         return f"{self.asset.name} in {self.snapshot.project.name}"

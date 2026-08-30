@@ -1,5 +1,6 @@
 from rest_framework import viewsets
-from rest_framework.filters import SearchFilter, OrderingFilter
+from rest_framework.filters import SearchFilter
+from ephany_framework.filters import StableOrderingFilter
 from django_filters.rest_framework import DjangoFilterBackend
 from django.db.models import Max
 
@@ -13,7 +14,7 @@ class SiteViewSet(viewsets.ModelViewSet):
     """
     queryset = Site.objects.prefetch_related('projects').all()
     serializer_class = SiteSerializer
-    filter_backends = [SearchFilter, OrderingFilter]
+    filter_backends = [SearchFilter, StableOrderingFilter]
     search_fields = ['site_id', 'name']
     ordering_fields = ['site_id', 'name', 'created_at']
 
@@ -30,7 +31,7 @@ class ProjectViewSet(viewsets.ModelViewSet):
     ).all()
 
     serializer_class = ProjectSerializer
-    filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
+    filter_backends = [DjangoFilterBackend, SearchFilter, StableOrderingFilter]
     filterset_fields = ['status', 'site']
     search_fields = ['job_id', 'name', 'site__site_id', 'city']
 
@@ -53,7 +54,7 @@ class SnapshotViewSet(viewsets.ModelViewSet):
     """
     queryset = Snapshot.objects.select_related('project').all()
     serializer_class = SnapshotSerializer
-    filter_backends = [DjangoFilterBackend, OrderingFilter]
+    filter_backends = [DjangoFilterBackend, StableOrderingFilter]
     filterset_fields = ['project']
 
 
