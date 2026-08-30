@@ -1,4 +1,5 @@
 import json
+from drf_spectacular.utils import extend_schema_field
 from rest_framework import serializers
 from .models import Project, Site, Snapshot, AssetInstance, AssetComponentInstance
 from assets.serializers import AssetSerializer, AssetComponentSerializer
@@ -51,6 +52,7 @@ class AssetComponentInstanceSerializer(serializers.ModelSerializer):
             if not hasattr(self, 'parent') or self.parent is None:
                 self.fields['asset_instance_id'].required = True
 
+    @extend_schema_field(AssetComponentSerializer)
     def get_asset_component(self, obj):
         """
         Manually serializes the related AssetComponent.

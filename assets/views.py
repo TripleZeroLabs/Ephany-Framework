@@ -1,3 +1,4 @@
+from drf_spectacular.utils import extend_schema
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
@@ -144,11 +145,11 @@ class AssetViewSet(viewsets.ModelViewSet):
         'updated_at'
     ]
 
-    def update(self, request, *args, **kwargs):
-        print("DEBUG FILES:", request.FILES)  # <--- Check console. Is this empty?
-        return super().update(request, *args, **kwargs)
-
-    @action(detail=False, methods=['get'])
+    @extend_schema(
+        summary="List every asset category, unpaginated",
+        responses={200: CategoryListSerializer(many=True)},
+    )
+    @action(detail=False, methods=['get'], pagination_class=None)
     def all_categories(self, request):
         """
         Custom action to return a non-paginated, complete list of unique
@@ -159,7 +160,11 @@ class AssetViewSet(viewsets.ModelViewSet):
         serializer = CategoryListSerializer(categories, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
-    @action(detail=False, methods=['get'])
+    @extend_schema(
+        summary="List every manufacturer, unpaginated",
+        responses={200: ManufacturerSerializer(many=True)},
+    )
+    @action(detail=False, methods=['get'], pagination_class=None)
     def all_manufacturers(self, request):
         """
         Returns a non-paginated list of all manufacturers for filter dropdowns.

@@ -5,6 +5,11 @@ from django.urls import path, include
 from django.views.generic import RedirectView
 from rest_framework.routers import DefaultRouter
 from rest_framework.authtoken.views import obtain_auth_token
+from drf_spectacular.views import (
+    SpectacularAPIView,
+    SpectacularRedocView,
+    SpectacularSwaggerView,
+)
 
 # --- Views ---
 from access.views import (
@@ -58,6 +63,20 @@ urlpatterns = [
 
     # API Routes
     path('api/', include(router.urls)),
+
+    # OpenAPI 3 schema and browsable documentation.
+    # The raw spec is also committed at the repo root as openapi.yaml.
+    path('api/schema/', SpectacularAPIView.as_view(), name='schema'),
+    path(
+        'api/docs/',
+        SpectacularSwaggerView.as_view(url_name='schema'),
+        name='swagger-ui',
+    ),
+    path(
+        'api/redoc/',
+        SpectacularRedocView.as_view(url_name='schema'),
+        name='redoc',
+    ),
 
     # Auth Endpoint: POST username/password to receive a Token
     path('api/login/', CustomAuthToken.as_view(), name='api_token_auth'),

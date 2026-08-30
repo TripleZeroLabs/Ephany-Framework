@@ -1,10 +1,27 @@
+from drf_spectacular.utils import extend_schema
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import AllowAny
 from rest_framework.authtoken.models import Token
 from rest_framework.authtoken.serializers import AuthTokenSerializer
 
+from .serializers import AuthTokenResponseSerializer
 
+
+@extend_schema(
+    tags=["access"],
+    summary="Exchange username and password for an auth token",
+    description=(
+        '''Returns a DRF auth token for the given credentials. Send it on
+subsequent requests as "Authorization: Token <token>".
+
+This endpoint is always reachable without authentication, including when
+API_KEY_AUTH_ENABLED is true.'''
+    ),
+    request=AuthTokenSerializer,
+    responses={200: AuthTokenResponseSerializer},
+    auth=[],
+)
 class CustomAuthToken(APIView):
     # 1. Clear Authentication (Don't try to read headers)
     authentication_classes = []
@@ -12,8 +29,6 @@ class CustomAuthToken(APIView):
     permission_classes = [AllowAny]
 
     def post(self, request, *args, **kwargs):
-        print("DEBUG: Login View was hit!")  # <--- Check your console for this!
-
         # Use the standard serializer to validate user/pass
         serializer = AuthTokenSerializer(data=request.data, context={'request': request})
         serializer.is_valid(raise_exception=True)

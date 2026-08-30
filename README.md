@@ -8,6 +8,7 @@ API designed to be consumed by modern frontend applications (desktop, web, mobil
 *   **Asset Management:** Track building assets (fixtures, equipment, components, and more) with metadata that is relevant to the design, construction, and procurement process.
 *   **Project Tracking:** Manage projects in respect to their relevant assets (per milestone).
 *   **API First:** Fully decoupled architecture using Django REST Framework.
+*   **Self-Describing:** A complete OpenAPI 3 schema is served at `/api/schema/` and committed to the repo as `openapi.yaml`, so clients, SDKs, and coding agents can discover the API without reading the source.
 
 ## Tech Stack
 
@@ -59,12 +60,20 @@ Save this key for used in the next step.
 
 Exit the shell with `exit()`. 
 
-Create a `.env` file in the root directory (copy from `.env.example` if available, or use the template below). Note that this file must be encoded as UTF-8.
+Copy `.env.example` to `.env` and fill in the secret key you just generated. Note that this file must be encoded as UTF-8.
+
+```
+cp .env.example .env
+```
+
+At minimum, `.env` needs:
 
 ```
 DJANGO_SECRET_KEY=your-secret-key-here
 DJANGO_DEBUG=True
 ```
+
+See `.env.example` for the full list of supported variables, including the optional Smartsheet sync settings.
 
 ### 5. Run Migrations & Server
 
@@ -90,6 +99,41 @@ python manage.py runserver
 
 By default, the API will be available at `http://127.0.0.1:8000/api`.  
 The Admin panel is at `http://127.0.0.1:8000/admin/`.
+
+---
+
+## API Documentation
+
+The API describes itself. Once the server is running:
+
+| URL | What it is |
+| --- | --- |
+| `http://127.0.0.1:8000/api/docs/` | Swagger UI — browse and try every endpoint |
+| `http://127.0.0.1:8000/api/redoc/` | ReDoc — the same schema, reference-style |
+| `http://127.0.0.1:8000/api/schema/` | The raw OpenAPI 3 document |
+
+These three routes stay reachable even when API key authentication is enabled,
+since the schema describes the API's shape without exposing any records. If you
+would rather keep them private, remove them from `API_KEY_EXEMPT_PATHS` in
+`ephany_framework/settings/base.py`.
+
+### Using the schema without running the server
+
+The generated spec is committed at [`openapi.yaml`](openapi.yaml) in the repo
+root. Point a code generator, an HTTP client, or a coding agent at it directly:
+
+```
+https://raw.githubusercontent.com/TripleZeroLabs/Ephany-Framework/master/openapi.yaml
+```
+
+Regenerate it after changing any serializer, viewset, or route:
+
+```
+python manage.py spectacular --file openapi.yaml --validate --fail-on-warn
+```
+
+`--fail-on-warn` makes the command exit non-zero if any endpoint cannot be
+described accurately, which keeps the committed spec honest.
 
 ---
 
@@ -149,8 +193,6 @@ If authentication is required but missing or invalid, the API returns:
 ## API Usage Example
 
 The framework exposes a powerful REST API. Below is an example of how to search for assets by **Manufacturer Name** using a standard HTTP GET request.
-
-Full API Documentation (in progress): https://documenter.getpostman.com/view/37222443/2sB3dVNnDe
 
 ### Request
 

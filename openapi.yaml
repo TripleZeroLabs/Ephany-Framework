@@ -1,0 +1,4762 @@
+openapi: 3.0.3
+info:
+  title: Ephany Framework API
+  version: 0.1.0
+  description: |-
+    Track a standard kit of parts across a fleet of near-identical projects.
+
+    The core chain is **Asset** (catalog definition) -> **Project** -> **Snapshot**
+    (a point in time) -> **AssetInstance** (one occurrence of a catalog asset in
+    that snapshot). Assets may be assemblies composed of other assets, and both
+    assets and instances carry `custom_fields` validated against the
+    `AssetAttribute` schema.
+paths:
+  /api/assets/:
+    get:
+      operationId: assets_list
+      parameters:
+      - in: query
+        name: category__name
+        schema:
+          type: string
+      - in: query
+        name: description
+        schema:
+          type: string
+      - in: query
+        name: description__icontains
+        schema:
+          type: string
+      - in: query
+        name: manufacturer__name
+        schema:
+          type: string
+      - in: query
+        name: manufacturer__name__icontains
+        schema:
+          type: string
+      - in: query
+        name: manufacturer__name__iexact
+        schema:
+          type: string
+      - in: query
+        name: model
+        schema:
+          type: string
+      - in: query
+        name: model__icontains
+        schema:
+          type: string
+      - in: query
+        name: model__iexact
+        schema:
+          type: string
+      - in: query
+        name: name
+        schema:
+          type: string
+      - in: query
+        name: name__icontains
+        schema:
+          type: string
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      - in: query
+        name: type_id
+        schema:
+          type: string
+      - in: query
+        name: type_id__iexact
+        schema:
+          type: string
+      tags:
+      - assets
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      - ApiKeyAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedAssetList'
+          description: ''
+    post:
+      operationId: assets_create
+      tags:
+      - assets
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/AssetRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/AssetRequest'
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AssetRequest'
+        required: true
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      - ApiKeyAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Asset'
+          description: ''
+  /api/assets/{id}/:
+    get:
+      operationId: assets_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this asset.
+        required: true
+      tags:
+      - assets
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      - ApiKeyAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Asset'
+          description: ''
+    put:
+      operationId: assets_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this asset.
+        required: true
+      tags:
+      - assets
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/AssetRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/AssetRequest'
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AssetRequest'
+        required: true
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      - ApiKeyAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Asset'
+          description: ''
+    patch:
+      operationId: assets_partial_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this asset.
+        required: true
+      tags:
+      - assets
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedAssetRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedAssetRequest'
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedAssetRequest'
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      - ApiKeyAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Asset'
+          description: ''
+    delete:
+      operationId: assets_destroy
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this asset.
+        required: true
+      tags:
+      - assets
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      - ApiKeyAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/assets/all_categories/:
+    get:
+      operationId: assets_all_categories_list
+      description: |-
+        Custom action to return a non-paginated, complete list of unique
+        asset categories for filter dropdowns in the frontend.
+        Endpoint: /api/assets/all_categories/
+      summary: List every asset category, unpaginated
+      parameters:
+      - in: query
+        name: category__name
+        schema:
+          type: string
+      - in: query
+        name: description
+        schema:
+          type: string
+      - in: query
+        name: description__icontains
+        schema:
+          type: string
+      - in: query
+        name: manufacturer__name
+        schema:
+          type: string
+      - in: query
+        name: manufacturer__name__icontains
+        schema:
+          type: string
+      - in: query
+        name: manufacturer__name__iexact
+        schema:
+          type: string
+      - in: query
+        name: model
+        schema:
+          type: string
+      - in: query
+        name: model__icontains
+        schema:
+          type: string
+      - in: query
+        name: model__iexact
+        schema:
+          type: string
+      - in: query
+        name: name
+        schema:
+          type: string
+      - in: query
+        name: name__icontains
+        schema:
+          type: string
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      - in: query
+        name: type_id
+        schema:
+          type: string
+      - in: query
+        name: type_id__iexact
+        schema:
+          type: string
+      tags:
+      - assets
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      - ApiKeyAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/CategoryList'
+          description: ''
+  /api/assets/all_manufacturers/:
+    get:
+      operationId: assets_all_manufacturers_list
+      description: |-
+        Returns a non-paginated list of all manufacturers for filter dropdowns.
+        Endpoint: /api/assets/all_manufacturers/
+      summary: List every manufacturer, unpaginated
+      parameters:
+      - in: query
+        name: category__name
+        schema:
+          type: string
+      - in: query
+        name: description
+        schema:
+          type: string
+      - in: query
+        name: description__icontains
+        schema:
+          type: string
+      - in: query
+        name: manufacturer__name
+        schema:
+          type: string
+      - in: query
+        name: manufacturer__name__icontains
+        schema:
+          type: string
+      - in: query
+        name: manufacturer__name__iexact
+        schema:
+          type: string
+      - in: query
+        name: model
+        schema:
+          type: string
+      - in: query
+        name: model__icontains
+        schema:
+          type: string
+      - in: query
+        name: model__iexact
+        schema:
+          type: string
+      - in: query
+        name: name
+        schema:
+          type: string
+      - in: query
+        name: name__icontains
+        schema:
+          type: string
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      - in: query
+        name: type_id
+        schema:
+          type: string
+      - in: query
+        name: type_id__iexact
+        schema:
+          type: string
+      tags:
+      - assets
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      - ApiKeyAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Manufacturer'
+          description: ''
+  /api/attribute-choices/:
+    get:
+      operationId: attribute_choices_list
+      description: |-
+        Full CRUD endpoint for picklist choices belonging to a 'choice'-type AssetAttribute.
+        Supports filtering by attribute id: /api/attribute-choices/?attribute=<id>
+        Supports filtering by attribute name: /api/attribute-choices/?attribute__name=<name>
+      parameters:
+      - in: query
+        name: attribute
+        schema:
+          type: integer
+      - in: query
+        name: attribute__name
+        schema:
+          type: string
+      - in: query
+        name: attribute__name__icontains
+        schema:
+          type: string
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      tags:
+      - attribute-choices
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      - ApiKeyAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedAssetAttributeChoiceList'
+          description: ''
+    post:
+      operationId: attribute_choices_create
+      description: |-
+        Full CRUD endpoint for picklist choices belonging to a 'choice'-type AssetAttribute.
+        Supports filtering by attribute id: /api/attribute-choices/?attribute=<id>
+        Supports filtering by attribute name: /api/attribute-choices/?attribute__name=<name>
+      tags:
+      - attribute-choices
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AssetAttributeChoiceRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/AssetAttributeChoiceRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/AssetAttributeChoiceRequest'
+        required: true
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      - ApiKeyAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AssetAttributeChoice'
+          description: ''
+  /api/attribute-choices/{id}/:
+    get:
+      operationId: attribute_choices_retrieve
+      description: |-
+        Full CRUD endpoint for picklist choices belonging to a 'choice'-type AssetAttribute.
+        Supports filtering by attribute id: /api/attribute-choices/?attribute=<id>
+        Supports filtering by attribute name: /api/attribute-choices/?attribute__name=<name>
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Asset Attribute Choice.
+        required: true
+      tags:
+      - attribute-choices
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      - ApiKeyAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AssetAttributeChoice'
+          description: ''
+    put:
+      operationId: attribute_choices_update
+      description: |-
+        Full CRUD endpoint for picklist choices belonging to a 'choice'-type AssetAttribute.
+        Supports filtering by attribute id: /api/attribute-choices/?attribute=<id>
+        Supports filtering by attribute name: /api/attribute-choices/?attribute__name=<name>
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Asset Attribute Choice.
+        required: true
+      tags:
+      - attribute-choices
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AssetAttributeChoiceRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/AssetAttributeChoiceRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/AssetAttributeChoiceRequest'
+        required: true
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      - ApiKeyAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AssetAttributeChoice'
+          description: ''
+    patch:
+      operationId: attribute_choices_partial_update
+      description: |-
+        Full CRUD endpoint for picklist choices belonging to a 'choice'-type AssetAttribute.
+        Supports filtering by attribute id: /api/attribute-choices/?attribute=<id>
+        Supports filtering by attribute name: /api/attribute-choices/?attribute__name=<name>
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Asset Attribute Choice.
+        required: true
+      tags:
+      - attribute-choices
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedAssetAttributeChoiceRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedAssetAttributeChoiceRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedAssetAttributeChoiceRequest'
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      - ApiKeyAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AssetAttributeChoice'
+          description: ''
+    delete:
+      operationId: attribute_choices_destroy
+      description: |-
+        Full CRUD endpoint for picklist choices belonging to a 'choice'-type AssetAttribute.
+        Supports filtering by attribute id: /api/attribute-choices/?attribute=<id>
+        Supports filtering by attribute name: /api/attribute-choices/?attribute__name=<name>
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Asset Attribute Choice.
+        required: true
+      tags:
+      - attribute-choices
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      - ApiKeyAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/attributes/:
+    get:
+      operationId: attributes_list
+      description: |-
+        Full CRUD endpoint for asset custom attribute definitions.
+        Choices are nested inline for read. Manage choices via /api/attribute-choices/.
+      parameters:
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      tags:
+      - attributes
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      - ApiKeyAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedAssetAttributeList'
+          description: ''
+    post:
+      operationId: attributes_create
+      description: |-
+        Full CRUD endpoint for asset custom attribute definitions.
+        Choices are nested inline for read. Manage choices via /api/attribute-choices/.
+      tags:
+      - attributes
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AssetAttributeRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/AssetAttributeRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/AssetAttributeRequest'
+        required: true
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      - ApiKeyAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AssetAttribute'
+          description: ''
+  /api/attributes/{id}/:
+    get:
+      operationId: attributes_retrieve
+      description: |-
+        Full CRUD endpoint for asset custom attribute definitions.
+        Choices are nested inline for read. Manage choices via /api/attribute-choices/.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this asset attribute.
+        required: true
+      tags:
+      - attributes
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      - ApiKeyAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AssetAttribute'
+          description: ''
+    put:
+      operationId: attributes_update
+      description: |-
+        Full CRUD endpoint for asset custom attribute definitions.
+        Choices are nested inline for read. Manage choices via /api/attribute-choices/.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this asset attribute.
+        required: true
+      tags:
+      - attributes
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AssetAttributeRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/AssetAttributeRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/AssetAttributeRequest'
+        required: true
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      - ApiKeyAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AssetAttribute'
+          description: ''
+    patch:
+      operationId: attributes_partial_update
+      description: |-
+        Full CRUD endpoint for asset custom attribute definitions.
+        Choices are nested inline for read. Manage choices via /api/attribute-choices/.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this asset attribute.
+        required: true
+      tags:
+      - attributes
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedAssetAttributeRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedAssetAttributeRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedAssetAttributeRequest'
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      - ApiKeyAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AssetAttribute'
+          description: ''
+    delete:
+      operationId: attributes_destroy
+      description: |-
+        Full CRUD endpoint for asset custom attribute definitions.
+        Choices are nested inline for read. Manage choices via /api/attribute-choices/.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this asset attribute.
+        required: true
+      tags:
+      - attributes
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      - ApiKeyAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/categories/:
+    get:
+      operationId: categories_list
+      parameters:
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      tags:
+      - categories
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      - ApiKeyAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedAssetCategoryList'
+          description: ''
+    post:
+      operationId: categories_create
+      tags:
+      - categories
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AssetCategoryRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/AssetCategoryRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/AssetCategoryRequest'
+        required: true
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      - ApiKeyAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AssetCategory'
+          description: ''
+  /api/categories/{id}/:
+    get:
+      operationId: categories_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this asset category.
+        required: true
+      tags:
+      - categories
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      - ApiKeyAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AssetCategory'
+          description: ''
+    put:
+      operationId: categories_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this asset category.
+        required: true
+      tags:
+      - categories
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AssetCategoryRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/AssetCategoryRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/AssetCategoryRequest'
+        required: true
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      - ApiKeyAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AssetCategory'
+          description: ''
+    patch:
+      operationId: categories_partial_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this asset category.
+        required: true
+      tags:
+      - categories
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedAssetCategoryRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedAssetCategoryRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedAssetCategoryRequest'
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      - ApiKeyAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AssetCategory'
+          description: ''
+    delete:
+      operationId: categories_destroy
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this asset category.
+        required: true
+      tags:
+      - categories
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      - ApiKeyAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/files/:
+    get:
+      operationId: files_list
+      parameters:
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      tags:
+      - files
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      - ApiKeyAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedAssetFileList'
+          description: ''
+    post:
+      operationId: files_create
+      tags:
+      - files
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AssetFileRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/AssetFileRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/AssetFileRequest'
+        required: true
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      - ApiKeyAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AssetFile'
+          description: ''
+  /api/files/{id}/:
+    get:
+      operationId: files_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this asset file.
+        required: true
+      tags:
+      - files
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      - ApiKeyAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AssetFile'
+          description: ''
+    put:
+      operationId: files_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this asset file.
+        required: true
+      tags:
+      - files
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AssetFileRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/AssetFileRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/AssetFileRequest'
+        required: true
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      - ApiKeyAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AssetFile'
+          description: ''
+    patch:
+      operationId: files_partial_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this asset file.
+        required: true
+      tags:
+      - files
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedAssetFileRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedAssetFileRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedAssetFileRequest'
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      - ApiKeyAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AssetFile'
+          description: ''
+    delete:
+      operationId: files_destroy
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this asset file.
+        required: true
+      tags:
+      - files
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      - ApiKeyAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/instances/:
+    get:
+      operationId: instances_list
+      description: |-
+        ViewSet for AssetInstances.
+
+        Provides CRUD operations for assets placed within a project snapshot.
+        Optimized to handle deep nesting of library data and optional components.
+      parameters:
+      - in: query
+        name: asset
+        schema:
+          type: integer
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      - in: query
+        name: snapshot
+        schema:
+          type: integer
+      tags:
+      - instances
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      - ApiKeyAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedAssetInstanceList'
+          description: ''
+    post:
+      operationId: instances_create
+      description: |-
+        ViewSet for AssetInstances.
+
+        Provides CRUD operations for assets placed within a project snapshot.
+        Optimized to handle deep nesting of library data and optional components.
+      tags:
+      - instances
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AssetInstanceRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/AssetInstanceRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/AssetInstanceRequest'
+        required: true
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      - ApiKeyAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AssetInstance'
+          description: ''
+  /api/instances/{id}/:
+    get:
+      operationId: instances_retrieve
+      description: |-
+        ViewSet for AssetInstances.
+
+        Provides CRUD operations for assets placed within a project snapshot.
+        Optimized to handle deep nesting of library data and optional components.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this asset instance.
+        required: true
+      tags:
+      - instances
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      - ApiKeyAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AssetInstance'
+          description: ''
+    put:
+      operationId: instances_update
+      description: |-
+        ViewSet for AssetInstances.
+
+        Provides CRUD operations for assets placed within a project snapshot.
+        Optimized to handle deep nesting of library data and optional components.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this asset instance.
+        required: true
+      tags:
+      - instances
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AssetInstanceRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/AssetInstanceRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/AssetInstanceRequest'
+        required: true
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      - ApiKeyAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AssetInstance'
+          description: ''
+    patch:
+      operationId: instances_partial_update
+      description: |-
+        ViewSet for AssetInstances.
+
+        Provides CRUD operations for assets placed within a project snapshot.
+        Optimized to handle deep nesting of library data and optional components.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this asset instance.
+        required: true
+      tags:
+      - instances
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedAssetInstanceRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedAssetInstanceRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedAssetInstanceRequest'
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      - ApiKeyAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AssetInstance'
+          description: ''
+    delete:
+      operationId: instances_destroy
+      description: |-
+        ViewSet for AssetInstances.
+
+        Provides CRUD operations for assets placed within a project snapshot.
+        Optimized to handle deep nesting of library data and optional components.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this asset instance.
+        required: true
+      tags:
+      - instances
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      - ApiKeyAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/login/:
+    post:
+      operationId: login_create
+      description: |-
+        Returns a DRF auth token for the given credentials. Send it on
+        subsequent requests as "Authorization: Token <token>".
+
+        This endpoint is always reachable without authentication, including when
+        API_KEY_AUTH_ENABLED is true.
+      summary: Exchange username and password for an auth token
+      tags:
+      - access
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AuthTokenRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/AuthTokenRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/AuthTokenRequest'
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthTokenResponse'
+          description: ''
+  /api/manufacturers/:
+    get:
+      operationId: manufacturers_list
+      description: |-
+        ViewSet for viewing and editing manufacturers.
+        Supports search by name and ordering.
+      parameters:
+      - in: query
+        name: name
+        schema:
+          type: string
+      - in: query
+        name: name__icontains
+        schema:
+          type: string
+      - in: query
+        name: name__iexact
+        schema:
+          type: string
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      tags:
+      - manufacturers
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      - ApiKeyAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedManufacturerList'
+          description: ''
+    post:
+      operationId: manufacturers_create
+      description: |-
+        ViewSet for viewing and editing manufacturers.
+        Supports search by name and ordering.
+      tags:
+      - manufacturers
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ManufacturerRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ManufacturerRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ManufacturerRequest'
+        required: true
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      - ApiKeyAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Manufacturer'
+          description: ''
+  /api/manufacturers/{id}/:
+    get:
+      operationId: manufacturers_retrieve
+      description: |-
+        ViewSet for viewing and editing manufacturers.
+        Supports search by name and ordering.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this manufacturer.
+        required: true
+      tags:
+      - manufacturers
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      - ApiKeyAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Manufacturer'
+          description: ''
+    put:
+      operationId: manufacturers_update
+      description: |-
+        ViewSet for viewing and editing manufacturers.
+        Supports search by name and ordering.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this manufacturer.
+        required: true
+      tags:
+      - manufacturers
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ManufacturerRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ManufacturerRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ManufacturerRequest'
+        required: true
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      - ApiKeyAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Manufacturer'
+          description: ''
+    patch:
+      operationId: manufacturers_partial_update
+      description: |-
+        ViewSet for viewing and editing manufacturers.
+        Supports search by name and ordering.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this manufacturer.
+        required: true
+      tags:
+      - manufacturers
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedManufacturerRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedManufacturerRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedManufacturerRequest'
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      - ApiKeyAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Manufacturer'
+          description: ''
+    delete:
+      operationId: manufacturers_destroy
+      description: |-
+        ViewSet for viewing and editing manufacturers.
+        Supports search by name and ordering.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this manufacturer.
+        required: true
+      tags:
+      - manufacturers
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      - ApiKeyAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/projects/:
+    get:
+      operationId: projects_list
+      description: |-
+        ViewSet for managing Projects.
+
+        Optimized to include the date of the most recent snapshot for
+        sorting purposes on the dashboard.
+      parameters:
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      - in: query
+        name: site
+        schema:
+          type: integer
+      - in: query
+        name: status
+        schema:
+          type: string
+          enum:
+          - blue
+          - green
+          - red
+          - yellow
+        description: |-
+          * `red` - Red
+          * `yellow` - Yellow
+          * `green` - Green
+          * `blue` - Blue
+      tags:
+      - projects
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      - ApiKeyAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedProjectList'
+          description: ''
+    post:
+      operationId: projects_create
+      description: |-
+        ViewSet for managing Projects.
+
+        Optimized to include the date of the most recent snapshot for
+        sorting purposes on the dashboard.
+      tags:
+      - projects
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProjectRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ProjectRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ProjectRequest'
+        required: true
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      - ApiKeyAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Project'
+          description: ''
+  /api/projects/{id}/:
+    get:
+      operationId: projects_retrieve
+      description: |-
+        ViewSet for managing Projects.
+
+        Optimized to include the date of the most recent snapshot for
+        sorting purposes on the dashboard.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this project.
+        required: true
+      tags:
+      - projects
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      - ApiKeyAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Project'
+          description: ''
+    put:
+      operationId: projects_update
+      description: |-
+        ViewSet for managing Projects.
+
+        Optimized to include the date of the most recent snapshot for
+        sorting purposes on the dashboard.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this project.
+        required: true
+      tags:
+      - projects
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProjectRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ProjectRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ProjectRequest'
+        required: true
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      - ApiKeyAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Project'
+          description: ''
+    patch:
+      operationId: projects_partial_update
+      description: |-
+        ViewSet for managing Projects.
+
+        Optimized to include the date of the most recent snapshot for
+        sorting purposes on the dashboard.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this project.
+        required: true
+      tags:
+      - projects
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedProjectRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedProjectRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedProjectRequest'
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      - ApiKeyAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Project'
+          description: ''
+    delete:
+      operationId: projects_destroy
+      description: |-
+        ViewSet for managing Projects.
+
+        Optimized to include the date of the most recent snapshot for
+        sorting purposes on the dashboard.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this project.
+        required: true
+      tags:
+      - projects
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      - ApiKeyAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/sites/:
+    get:
+      operationId: sites_list
+      description: ViewSet for managing Sites.
+      parameters:
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      tags:
+      - sites
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      - ApiKeyAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedSiteList'
+          description: ''
+    post:
+      operationId: sites_create
+      description: ViewSet for managing Sites.
+      tags:
+      - sites
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SiteRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/SiteRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/SiteRequest'
+        required: true
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      - ApiKeyAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Site'
+          description: ''
+  /api/sites/{id}/:
+    get:
+      operationId: sites_retrieve
+      description: ViewSet for managing Sites.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this site.
+        required: true
+      tags:
+      - sites
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      - ApiKeyAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Site'
+          description: ''
+    put:
+      operationId: sites_update
+      description: ViewSet for managing Sites.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this site.
+        required: true
+      tags:
+      - sites
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SiteRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/SiteRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/SiteRequest'
+        required: true
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      - ApiKeyAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Site'
+          description: ''
+    patch:
+      operationId: sites_partial_update
+      description: ViewSet for managing Sites.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this site.
+        required: true
+      tags:
+      - sites
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedSiteRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedSiteRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedSiteRequest'
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      - ApiKeyAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Site'
+          description: ''
+    delete:
+      operationId: sites_destroy
+      description: ViewSet for managing Sites.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this site.
+        required: true
+      tags:
+      - sites
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      - ApiKeyAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/snapshots/:
+    get:
+      operationId: snapshots_list
+      description: |-
+        ViewSet for Project Snapshots.
+
+        Uses select_related to join the project data in a single query.
+      parameters:
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      - in: query
+        name: project
+        schema:
+          type: integer
+      tags:
+      - snapshots
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      - ApiKeyAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedSnapshotList'
+          description: ''
+    post:
+      operationId: snapshots_create
+      description: |-
+        ViewSet for Project Snapshots.
+
+        Uses select_related to join the project data in a single query.
+      tags:
+      - snapshots
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SnapshotRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/SnapshotRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/SnapshotRequest'
+        required: true
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      - ApiKeyAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Snapshot'
+          description: ''
+  /api/snapshots/{id}/:
+    get:
+      operationId: snapshots_retrieve
+      description: |-
+        ViewSet for Project Snapshots.
+
+        Uses select_related to join the project data in a single query.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this snapshot.
+        required: true
+      tags:
+      - snapshots
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      - ApiKeyAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Snapshot'
+          description: ''
+    put:
+      operationId: snapshots_update
+      description: |-
+        ViewSet for Project Snapshots.
+
+        Uses select_related to join the project data in a single query.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this snapshot.
+        required: true
+      tags:
+      - snapshots
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SnapshotRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/SnapshotRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/SnapshotRequest'
+        required: true
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      - ApiKeyAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Snapshot'
+          description: ''
+    patch:
+      operationId: snapshots_partial_update
+      description: |-
+        ViewSet for Project Snapshots.
+
+        Uses select_related to join the project data in a single query.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this snapshot.
+        required: true
+      tags:
+      - snapshots
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedSnapshotRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedSnapshotRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedSnapshotRequest'
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      - ApiKeyAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Snapshot'
+          description: ''
+    delete:
+      operationId: snapshots_destroy
+      description: |-
+        ViewSet for Project Snapshots.
+
+        Uses select_related to join the project data in a single query.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this snapshot.
+        required: true
+      tags:
+      - snapshots
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      - ApiKeyAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/users/:
+    get:
+      operationId: users_list
+      parameters:
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      tags:
+      - users
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      - ApiKeyAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedUserList'
+          description: ''
+    post:
+      operationId: users_create
+      tags:
+      - users
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/UserRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/UserRequest'
+        required: true
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      - ApiKeyAuth: []
+      - {}
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+          description: ''
+  /api/users/{id}/:
+    get:
+      operationId: users_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this user.
+        required: true
+      tags:
+      - users
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      - ApiKeyAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+          description: ''
+    put:
+      operationId: users_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this user.
+        required: true
+      tags:
+      - users
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/UserRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/UserRequest'
+        required: true
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      - ApiKeyAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+          description: ''
+    patch:
+      operationId: users_partial_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this user.
+        required: true
+      tags:
+      - users
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedUserRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedUserRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedUserRequest'
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      - ApiKeyAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+          description: ''
+    delete:
+      operationId: users_destroy
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this user.
+        required: true
+      tags:
+      - users
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      - ApiKeyAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/vendor-products/:
+    get:
+      operationId: vendor_products_list
+      parameters:
+      - in: query
+        name: asset
+        schema:
+          type: integer
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      - in: query
+        name: vendor
+        schema:
+          type: integer
+      tags:
+      - vendor-products
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      - ApiKeyAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedVendorProductList'
+          description: ''
+    post:
+      operationId: vendor_products_create
+      tags:
+      - vendor-products
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VendorProductRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/VendorProductRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/VendorProductRequest'
+        required: true
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      - ApiKeyAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VendorProduct'
+          description: ''
+  /api/vendor-products/{id}/:
+    get:
+      operationId: vendor_products_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Vendor Product.
+        required: true
+      tags:
+      - vendor-products
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      - ApiKeyAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VendorProduct'
+          description: ''
+    put:
+      operationId: vendor_products_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Vendor Product.
+        required: true
+      tags:
+      - vendor-products
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VendorProductRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/VendorProductRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/VendorProductRequest'
+        required: true
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      - ApiKeyAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VendorProduct'
+          description: ''
+    patch:
+      operationId: vendor_products_partial_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Vendor Product.
+        required: true
+      tags:
+      - vendor-products
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedVendorProductRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedVendorProductRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedVendorProductRequest'
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      - ApiKeyAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VendorProduct'
+          description: ''
+    delete:
+      operationId: vendor_products_destroy
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Vendor Product.
+        required: true
+      tags:
+      - vendor-products
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      - ApiKeyAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/vendors/:
+    get:
+      operationId: vendors_list
+      parameters:
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      tags:
+      - vendors
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      - ApiKeyAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedVendorList'
+          description: ''
+    post:
+      operationId: vendors_create
+      tags:
+      - vendors
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VendorRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/VendorRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/VendorRequest'
+        required: true
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      - ApiKeyAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Vendor'
+          description: ''
+  /api/vendors/{id}/:
+    get:
+      operationId: vendors_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this vendor.
+        required: true
+      tags:
+      - vendors
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      - ApiKeyAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Vendor'
+          description: ''
+    put:
+      operationId: vendors_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this vendor.
+        required: true
+      tags:
+      - vendors
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VendorRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/VendorRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/VendorRequest'
+        required: true
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      - ApiKeyAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Vendor'
+          description: ''
+    patch:
+      operationId: vendors_partial_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this vendor.
+        required: true
+      tags:
+      - vendors
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedVendorRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedVendorRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedVendorRequest'
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      - ApiKeyAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Vendor'
+          description: ''
+    delete:
+      operationId: vendors_destroy
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this vendor.
+        required: true
+      tags:
+      - vendors
+      security:
+      - tokenAuth: []
+      - cookieAuth: []
+      - ApiKeyAuth: []
+      responses:
+        '204':
+          description: No response body
+components:
+  schemas:
+    AreaUnitEnum:
+      enum:
+      - sq_m
+      - sq_ft
+      type: string
+      description: |-
+        * `sq_m` - Square Meters (m²)
+        * `sq_ft` - Square Feet (ft²)
+    Asset:
+      type: object
+      description: |-
+        Primary serializer for Asset instances.
+        Handles unit conversion (metric/imperial) based on user settings.
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        type_id:
+          type: string
+          maxLength: 100
+        manufacturer:
+          allOf:
+          - $ref: '#/components/schemas/Manufacturer'
+          readOnly: true
+        manufacturer_name:
+          type: string
+          readOnly: true
+        category:
+          allOf:
+          - $ref: '#/components/schemas/AssetCategory'
+          readOnly: true
+        category_name:
+          type: string
+          readOnly: true
+        model:
+          type: string
+          maxLength: 255
+        name:
+          type: string
+          maxLength: 255
+        description:
+          type: string
+          nullable: true
+        url:
+          title: Product URL
+          oneOf:
+          - type: string
+            format: uri
+            maxLength: 200
+          - type: string
+            maxLength: 0
+        catalog_img:
+          type: string
+          format: uri
+          nullable: true
+        overall_height:
+          type: number
+          format: double
+          nullable: true
+        overall_width:
+          type: number
+          format: double
+          nullable: true
+        overall_depth:
+          type: number
+          format: double
+          nullable: true
+        custom_fields:
+          nullable: true
+        files:
+          type: array
+          items:
+            $ref: '#/components/schemas/AssetFile'
+          readOnly: true
+        components:
+          type: array
+          items:
+            $ref: '#/components/schemas/AssetComponent'
+          readOnly: true
+      required:
+      - category
+      - category_name
+      - components
+      - files
+      - id
+      - manufacturer
+      - manufacturer_name
+      - model
+      - name
+      - type_id
+    AssetAttribute:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          description: Key name. Must be lowercase, use underscores, and have no special
+            characters (e.g., 'material_finish').
+          maxLength: 50
+        scope:
+          allOf:
+          - $ref: '#/components/schemas/ScopeEnum'
+          description: |-
+            Determines if this field appears on the generic Catalog definition or the specific Project Instance.
+
+            * `type` - Asset Type (Catalog)
+            * `instance` - Asset Instance (Project)
+            * `both` - Both
+        data_type:
+          allOf:
+          - $ref: '#/components/schemas/DataTypeEnum'
+          description: |-
+            Enforce a specific data type for this attribute.
+
+            * `str` - Text
+            * `int` - Whole Number
+            * `float` - Decimal
+            * `bool` - Yes / No
+            * `choice` - Picklist (Single)
+            * `multi_choice` - Picklist (Multiple)
+        unit_type:
+          allOf:
+          - $ref: '#/components/schemas/UnitTypeEnum'
+          description: |-
+            Revit SpecTypeId for unit conversion.
+
+            * `none` - No Unit (Text/Bool/Int)
+            * `autodesk.spec.aec:length-2.0.0` - Length
+            * `autodesk.spec.aec:distance-1.0.0` - Distance
+            * `autodesk.spec.aec:area-2.0.0` - Area
+            * `autodesk.spec.aec:volume-2.0.0` - Volume
+            * `autodesk.spec.aec:mass-2.0.0` - Mass / Weight
+            * `autodesk.spec.aec:massDensity-2.0.0` - Density
+            * `autodesk.spec.aec:angle-2.0.0` - Angle
+            * `autodesk.spec.aec:slope-2.0.0` - Slope
+            * `autodesk.spec.aec:number-2.0.0` - Number (Unitless)
+        choices:
+          type: array
+          items:
+            $ref: '#/components/schemas/AssetAttributeChoice'
+          readOnly: true
+      required:
+      - choices
+      - id
+      - name
+    AssetAttributeChoice:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        value:
+          type: string
+          title: Choice Value
+          description: Allowed value for this attribute. Must be unique within this
+            attribute.
+          maxLength: 255
+        order:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: 0
+          format: int64
+          description: Display order of this choice in the picklist (lower numbers
+            appear first).
+      required:
+      - id
+      - value
+    AssetAttributeChoiceRequest:
+      type: object
+      properties:
+        value:
+          type: string
+          minLength: 1
+          title: Choice Value
+          description: Allowed value for this attribute. Must be unique within this
+            attribute.
+          maxLength: 255
+        order:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: 0
+          format: int64
+          description: Display order of this choice in the picklist (lower numbers
+            appear first).
+      required:
+      - value
+    AssetAttributeRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          description: Key name. Must be lowercase, use underscores, and have no special
+            characters (e.g., 'material_finish').
+          maxLength: 50
+        scope:
+          allOf:
+          - $ref: '#/components/schemas/ScopeEnum'
+          description: |-
+            Determines if this field appears on the generic Catalog definition or the specific Project Instance.
+
+            * `type` - Asset Type (Catalog)
+            * `instance` - Asset Instance (Project)
+            * `both` - Both
+        data_type:
+          allOf:
+          - $ref: '#/components/schemas/DataTypeEnum'
+          description: |-
+            Enforce a specific data type for this attribute.
+
+            * `str` - Text
+            * `int` - Whole Number
+            * `float` - Decimal
+            * `bool` - Yes / No
+            * `choice` - Picklist (Single)
+            * `multi_choice` - Picklist (Multiple)
+        unit_type:
+          allOf:
+          - $ref: '#/components/schemas/UnitTypeEnum'
+          description: |-
+            Revit SpecTypeId for unit conversion.
+
+            * `none` - No Unit (Text/Bool/Int)
+            * `autodesk.spec.aec:length-2.0.0` - Length
+            * `autodesk.spec.aec:distance-1.0.0` - Distance
+            * `autodesk.spec.aec:area-2.0.0` - Area
+            * `autodesk.spec.aec:volume-2.0.0` - Volume
+            * `autodesk.spec.aec:mass-2.0.0` - Mass / Weight
+            * `autodesk.spec.aec:massDensity-2.0.0` - Density
+            * `autodesk.spec.aec:angle-2.0.0` - Angle
+            * `autodesk.spec.aec:slope-2.0.0` - Slope
+            * `autodesk.spec.aec:number-2.0.0` - Number (Unitless)
+      required:
+      - name
+    AssetCategory:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          maxLength: 100
+        description:
+          type: string
+      required:
+      - id
+      - name
+    AssetCategoryRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+        description:
+          type: string
+      required:
+      - name
+    AssetComponent:
+      type: object
+      description: Serializer for AssetComponent (through model for assemblies).
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        child_asset:
+          allOf:
+          - $ref: '#/components/schemas/NestedAsset'
+          readOnly: true
+        quantity_required:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: 0
+          format: int64
+          description: Number of this component needed in the assembly
+        can_add_per_instance:
+          type: boolean
+          description: If true, this component can have additional quantities added
+            per AssetInstance (project-level).
+      required:
+      - child_asset
+      - id
+    AssetComponentInstance:
+      type: object
+      description: |-
+        Serializer for AssetComponentInstance.
+
+        Handles the linking of optional AssetComponents to specific AssetInstances.
+        Uses SerializerMethodField for 'asset_component' to prevent circular import
+        issues and ensure full nested serialization of the component definition.
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        asset_component:
+          allOf:
+          - $ref: '#/components/schemas/AssetComponent'
+          readOnly: true
+        component_name:
+          type: string
+          readOnly: true
+        component_type_id:
+          type: string
+          readOnly: true
+        component_quantity:
+          type: integer
+          readOnly: true
+        asset_instance_asset_name:
+          type: string
+          readOnly: true
+        quantity:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: 0
+          format: int64
+          description: Quantity of this optional component for this specific instance.
+            Defaults to the component's base quantity.
+      required:
+      - asset_component
+      - asset_instance_asset_name
+      - component_name
+      - component_quantity
+      - component_type_id
+      - id
+    AssetComponentInstanceRequest:
+      type: object
+      description: |-
+        Serializer for AssetComponentInstance.
+
+        Handles the linking of optional AssetComponents to specific AssetInstances.
+        Uses SerializerMethodField for 'asset_component' to prevent circular import
+        issues and ensure full nested serialization of the component definition.
+      properties:
+        asset_instance_id:
+          type: integer
+          writeOnly: true
+        asset_component_id:
+          type: integer
+          writeOnly: true
+        quantity:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: 0
+          format: int64
+          description: Quantity of this optional component for this specific instance.
+            Defaults to the component's base quantity.
+      required:
+      - asset_component_id
+      - asset_instance_id
+    AssetComponentRequest:
+      type: object
+      description: Serializer for AssetComponent (through model for assemblies).
+      properties:
+        child_asset_id:
+          type: integer
+          writeOnly: true
+        quantity_required:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: 0
+          format: int64
+          description: Number of this component needed in the assembly
+        can_add_per_instance:
+          type: boolean
+          description: If true, this component can have additional quantities added
+            per AssetInstance (project-level).
+      required:
+      - child_asset_id
+    AssetFile:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        file:
+          type: string
+          format: uri
+        category:
+          $ref: '#/components/schemas/CategoryEnum'
+        category_display:
+          type: string
+          readOnly: true
+        uploaded_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - category_display
+      - file
+      - id
+      - uploaded_at
+    AssetFileRequest:
+      type: object
+      properties:
+        file:
+          type: string
+          format: binary
+        category:
+          $ref: '#/components/schemas/CategoryEnum'
+      required:
+      - file
+    AssetInstance:
+      type: object
+      description: |-
+        Serializer for AssetInstance.
+
+        Includes detailed asset library information and a collection of
+        optional component instances selected for this specific snapshot.
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        snapshot:
+          type: integer
+        asset:
+          type: integer
+        instance_id:
+          type: string
+          nullable: true
+          maxLength: 100
+        asset_details:
+          allOf:
+          - $ref: '#/components/schemas/Asset'
+          readOnly: true
+        location:
+          type: string
+          nullable: true
+          maxLength: 200
+        custom_fields: {}
+        optional_components:
+          type: array
+          items:
+            $ref: '#/components/schemas/AssetComponentInstance'
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - asset
+      - asset_details
+      - created_at
+      - id
+      - optional_components
+      - snapshot
+      - updated_at
+    AssetInstanceRequest:
+      type: object
+      description: |-
+        Serializer for AssetInstance.
+
+        Includes detailed asset library information and a collection of
+        optional component instances selected for this specific snapshot.
+      properties:
+        snapshot:
+          type: integer
+        asset:
+          type: integer
+        instance_id:
+          type: string
+          nullable: true
+          maxLength: 100
+        location:
+          type: string
+          nullable: true
+          maxLength: 200
+        custom_fields: {}
+        optional_component_data:
+          type: array
+          items:
+            type: object
+            additionalProperties: {}
+          writeOnly: true
+      required:
+      - asset
+      - snapshot
+    AssetRequest:
+      type: object
+      description: |-
+        Primary serializer for Asset instances.
+        Handles unit conversion (metric/imperial) based on user settings.
+      properties:
+        type_id:
+          type: string
+          minLength: 1
+          maxLength: 100
+        manufacturer_id:
+          type: integer
+          writeOnly: true
+          nullable: true
+        category_id:
+          type: integer
+          writeOnly: true
+          nullable: true
+        model:
+          type: string
+          minLength: 1
+          maxLength: 255
+        name:
+          type: string
+          minLength: 1
+          maxLength: 255
+        description:
+          type: string
+          nullable: true
+        url:
+          title: Product URL
+          oneOf:
+          - type: string
+            format: uri
+            maxLength: 200
+          - type: string
+            maxLength: 0
+        catalog_img:
+          type: string
+          format: binary
+          nullable: true
+        overall_height:
+          type: number
+          format: double
+          nullable: true
+        overall_width:
+          type: number
+          format: double
+          nullable: true
+        overall_depth:
+          type: number
+          format: double
+          nullable: true
+        custom_fields:
+          nullable: true
+        file_ids:
+          type: array
+          items:
+            type: integer
+            writeOnly: true
+          writeOnly: true
+        input_units:
+          type: object
+          additionalProperties: {}
+          writeOnly: true
+          description: 'Required if providing dimensions. Example: {''length'': ''ft''}'
+        component_data:
+          type: array
+          items:
+            type: object
+            additionalProperties: {}
+          writeOnly: true
+          description: 'List of components with ''child_asset_id'', ''quantity_required'',
+            and optional ''can_add_per_instance''. Example: [{''child_asset_id'':
+            1, ''quantity'': 2, ''can_add_per_instance'': False}]'
+      required:
+      - model
+      - name
+      - type_id
+    AuthTokenRequest:
+      type: object
+      properties:
+        username:
+          type: string
+          writeOnly: true
+          minLength: 1
+        password:
+          type: string
+          writeOnly: true
+          minLength: 1
+      required:
+      - password
+      - username
+    AuthTokenResponse:
+      type: object
+      description: |-
+        Shape of a successful POST /api/login/ response.
+
+        Documentation only — the view builds this payload directly. It exists so
+        the OpenAPI schema describes the login response instead of reporting
+        "no response body".
+      properties:
+        token:
+          type: string
+          description: 'Send as "Authorization: Token <token>" on subsequent requests.'
+        user_id:
+          type: integer
+        email:
+          type: string
+          format: email
+      required:
+      - email
+      - token
+      - user_id
+    BlankEnum:
+      enum:
+      - ''
+    CategoryEnum:
+      enum:
+      - PDS
+      - DWG
+      - RFA
+      - ETC
+      type: string
+      description: |-
+        * `PDS` - Cut Sheet
+        * `DWG` - CAD File
+        * `RFA` - Revit Family
+        * `ETC` - Other
+    CategoryList:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          maxLength: 100
+      required:
+      - id
+      - name
+    DataTypeEnum:
+      enum:
+      - str
+      - int
+      - float
+      - bool
+      - choice
+      - multi_choice
+      type: string
+      description: |-
+        * `str` - Text
+        * `int` - Whole Number
+        * `float` - Decimal
+        * `bool` - Yes / No
+        * `choice` - Picklist (Single)
+        * `multi_choice` - Picklist (Multiple)
+    LengthUnitEnum:
+      enum:
+      - mm
+      - cm
+      - m
+      - in
+      - ft
+      type: string
+      description: |-
+        * `mm` - Millimeters (mm)
+        * `cm` - Centimeters (cm)
+        * `m` - Meters (m)
+        * `in` - Inches (in)
+        * `ft` - Feet (ft)
+    Manufacturer:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          maxLength: 255
+        url:
+          title: Company Website
+          oneOf:
+          - type: string
+            format: uri
+            maxLength: 200
+          - type: string
+            maxLength: 0
+        logo:
+          type: string
+          format: uri
+          nullable: true
+      required:
+      - id
+      - name
+    ManufacturerRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 255
+        url:
+          title: Company Website
+          oneOf:
+          - type: string
+            format: uri
+            maxLength: 200
+          - type: string
+            maxLength: 0
+        logo:
+          type: string
+          format: binary
+          nullable: true
+      required:
+      - name
+    MassUnitEnum:
+      enum:
+      - kg
+      - lb
+      type: string
+      description: |-
+        * `kg` - Kilograms (kg)
+        * `lb` - Pounds (lb)
+    NestedAsset:
+      type: object
+      description: Simplified Asset serializer to avoid recursion in AssetComponentSerializer.
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        type_id:
+          type: string
+          maxLength: 100
+        manufacturer:
+          allOf:
+          - $ref: '#/components/schemas/Manufacturer'
+          readOnly: true
+        category:
+          allOf:
+          - $ref: '#/components/schemas/AssetCategory'
+          readOnly: true
+        model:
+          type: string
+          maxLength: 255
+        name:
+          type: string
+          maxLength: 255
+        description:
+          type: string
+          nullable: true
+        url:
+          title: Product URL
+          oneOf:
+          - type: string
+            format: uri
+            maxLength: 200
+          - type: string
+            maxLength: 0
+        catalog_img:
+          type: string
+          format: uri
+          nullable: true
+        overall_height:
+          type: number
+          format: double
+          nullable: true
+        overall_width:
+          type: number
+          format: double
+          nullable: true
+        overall_depth:
+          type: number
+          format: double
+          nullable: true
+        custom_fields: {}
+      required:
+      - category
+      - id
+      - manufacturer
+      - model
+      - name
+      - type_id
+    NestedAssetRequest:
+      type: object
+      description: Simplified Asset serializer to avoid recursion in AssetComponentSerializer.
+      properties:
+        type_id:
+          type: string
+          minLength: 1
+          maxLength: 100
+        model:
+          type: string
+          minLength: 1
+          maxLength: 255
+        name:
+          type: string
+          minLength: 1
+          maxLength: 255
+        description:
+          type: string
+          nullable: true
+        url:
+          title: Product URL
+          oneOf:
+          - type: string
+            format: uri
+            maxLength: 200
+          - type: string
+            maxLength: 0
+        catalog_img:
+          type: string
+          format: binary
+          nullable: true
+        overall_height:
+          type: number
+          format: double
+          nullable: true
+        overall_width:
+          type: number
+          format: double
+          nullable: true
+        overall_depth:
+          type: number
+          format: double
+          nullable: true
+        custom_fields: {}
+      required:
+      - model
+      - name
+      - type_id
+    PaginatedAssetAttributeChoiceList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/AssetAttributeChoice'
+    PaginatedAssetAttributeList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/AssetAttribute'
+    PaginatedAssetCategoryList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/AssetCategory'
+    PaginatedAssetFileList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/AssetFile'
+    PaginatedAssetInstanceList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/AssetInstance'
+    PaginatedAssetList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/Asset'
+    PaginatedManufacturerList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/Manufacturer'
+    PaginatedProjectList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/Project'
+    PaginatedSiteList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/Site'
+    PaginatedSnapshotList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/Snapshot'
+    PaginatedUserList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/User'
+    PaginatedVendorList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/Vendor'
+    PaginatedVendorProductList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/VendorProduct'
+    PatchedAssetAttributeChoiceRequest:
+      type: object
+      properties:
+        value:
+          type: string
+          minLength: 1
+          title: Choice Value
+          description: Allowed value for this attribute. Must be unique within this
+            attribute.
+          maxLength: 255
+        order:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: 0
+          format: int64
+          description: Display order of this choice in the picklist (lower numbers
+            appear first).
+    PatchedAssetAttributeRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          description: Key name. Must be lowercase, use underscores, and have no special
+            characters (e.g., 'material_finish').
+          maxLength: 50
+        scope:
+          allOf:
+          - $ref: '#/components/schemas/ScopeEnum'
+          description: |-
+            Determines if this field appears on the generic Catalog definition or the specific Project Instance.
+
+            * `type` - Asset Type (Catalog)
+            * `instance` - Asset Instance (Project)
+            * `both` - Both
+        data_type:
+          allOf:
+          - $ref: '#/components/schemas/DataTypeEnum'
+          description: |-
+            Enforce a specific data type for this attribute.
+
+            * `str` - Text
+            * `int` - Whole Number
+            * `float` - Decimal
+            * `bool` - Yes / No
+            * `choice` - Picklist (Single)
+            * `multi_choice` - Picklist (Multiple)
+        unit_type:
+          allOf:
+          - $ref: '#/components/schemas/UnitTypeEnum'
+          description: |-
+            Revit SpecTypeId for unit conversion.
+
+            * `none` - No Unit (Text/Bool/Int)
+            * `autodesk.spec.aec:length-2.0.0` - Length
+            * `autodesk.spec.aec:distance-1.0.0` - Distance
+            * `autodesk.spec.aec:area-2.0.0` - Area
+            * `autodesk.spec.aec:volume-2.0.0` - Volume
+            * `autodesk.spec.aec:mass-2.0.0` - Mass / Weight
+            * `autodesk.spec.aec:massDensity-2.0.0` - Density
+            * `autodesk.spec.aec:angle-2.0.0` - Angle
+            * `autodesk.spec.aec:slope-2.0.0` - Slope
+            * `autodesk.spec.aec:number-2.0.0` - Number (Unitless)
+    PatchedAssetCategoryRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+        description:
+          type: string
+    PatchedAssetFileRequest:
+      type: object
+      properties:
+        file:
+          type: string
+          format: binary
+        category:
+          $ref: '#/components/schemas/CategoryEnum'
+    PatchedAssetInstanceRequest:
+      type: object
+      description: |-
+        Serializer for AssetInstance.
+
+        Includes detailed asset library information and a collection of
+        optional component instances selected for this specific snapshot.
+      properties:
+        snapshot:
+          type: integer
+        asset:
+          type: integer
+        instance_id:
+          type: string
+          nullable: true
+          maxLength: 100
+        location:
+          type: string
+          nullable: true
+          maxLength: 200
+        custom_fields: {}
+        optional_component_data:
+          type: array
+          items:
+            type: object
+            additionalProperties: {}
+          writeOnly: true
+    PatchedAssetRequest:
+      type: object
+      description: |-
+        Primary serializer for Asset instances.
+        Handles unit conversion (metric/imperial) based on user settings.
+      properties:
+        type_id:
+          type: string
+          minLength: 1
+          maxLength: 100
+        manufacturer_id:
+          type: integer
+          writeOnly: true
+          nullable: true
+        category_id:
+          type: integer
+          writeOnly: true
+          nullable: true
+        model:
+          type: string
+          minLength: 1
+          maxLength: 255
+        name:
+          type: string
+          minLength: 1
+          maxLength: 255
+        description:
+          type: string
+          nullable: true
+        url:
+          title: Product URL
+          oneOf:
+          - type: string
+            format: uri
+            maxLength: 200
+          - type: string
+            maxLength: 0
+        catalog_img:
+          type: string
+          format: binary
+          nullable: true
+        overall_height:
+          type: number
+          format: double
+          nullable: true
+        overall_width:
+          type: number
+          format: double
+          nullable: true
+        overall_depth:
+          type: number
+          format: double
+          nullable: true
+        custom_fields:
+          nullable: true
+        file_ids:
+          type: array
+          items:
+            type: integer
+            writeOnly: true
+          writeOnly: true
+        input_units:
+          type: object
+          additionalProperties: {}
+          writeOnly: true
+          description: 'Required if providing dimensions. Example: {''length'': ''ft''}'
+        component_data:
+          type: array
+          items:
+            type: object
+            additionalProperties: {}
+          writeOnly: true
+          description: 'List of components with ''child_asset_id'', ''quantity_required'',
+            and optional ''can_add_per_instance''. Example: [{''child_asset_id'':
+            1, ''quantity'': 2, ''can_add_per_instance'': False}]'
+    PatchedManufacturerRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 255
+        url:
+          title: Company Website
+          oneOf:
+          - type: string
+            format: uri
+            maxLength: 200
+          - type: string
+            maxLength: 0
+        logo:
+          type: string
+          format: binary
+          nullable: true
+    PatchedProjectRequest:
+      type: object
+      description: |-
+        Primary Serializer for Project data.
+        Provides nested snapshot history and aggregated snapshot counts.
+      properties:
+        job_id:
+          type: string
+          minLength: 1
+          maxLength: 50
+        name:
+          type: string
+          minLength: 1
+          maxLength: 200
+        description:
+          type: string
+          nullable: true
+        portfolio_img:
+          type: string
+          format: binary
+          nullable: true
+        site:
+          type: integer
+          nullable: true
+        address_line1:
+          type: string
+          maxLength: 255
+        address_line2:
+          type: string
+          maxLength: 255
+        city:
+          type: string
+          maxLength: 100
+        state:
+          type: string
+          title: State / Province
+          maxLength: 100
+        zip_code:
+          type: string
+          title: ZIP / Postal Code
+          maxLength: 20
+        country:
+          type: string
+          maxLength: 100
+        latitude:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,3}(?:\.\d{0,6})?$
+          nullable: true
+        longitude:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,3}(?:\.\d{0,6})?$
+          nullable: true
+        go_live_date:
+          type: string
+          format: date
+          nullable: true
+        status:
+          oneOf:
+          - $ref: '#/components/schemas/StatusEnum'
+          - $ref: '#/components/schemas/BlankEnum'
+        custom_fields: {}
+    PatchedSiteRequest:
+      type: object
+      properties:
+        site_id:
+          type: string
+          minLength: 1
+          maxLength: 100
+        name:
+          type: string
+          maxLength: 200
+    PatchedSnapshotRequest:
+      type: object
+      description: |-
+        Serializer for Project Snapshots.
+        Includes an aggregated count of all asset instances within the snapshot.
+      properties:
+        project:
+          type: integer
+        name:
+          type: string
+          minLength: 1
+          maxLength: 200
+        date:
+          type: string
+          format: date
+    PatchedUserRequest:
+      type: object
+      properties:
+        username:
+          type: string
+          minLength: 1
+          description: Required. 150 characters or fewer. Letters, digits and @/./+/-/_
+            only.
+          pattern: ^[\w.@+-]+$
+          maxLength: 150
+        email:
+          type: string
+          format: email
+          minLength: 1
+        password:
+          type: string
+          writeOnly: true
+          minLength: 1
+        first_name:
+          type: string
+          maxLength: 150
+        last_name:
+          type: string
+          maxLength: 150
+        settings:
+          $ref: '#/components/schemas/UserSettingsRequest'
+    PatchedVendorProductRequest:
+      type: object
+      properties:
+        asset_id:
+          type: integer
+          writeOnly: true
+        vendor_id:
+          type: integer
+          writeOnly: true
+        sku:
+          type: string
+          description: Vendor's internal SKU
+          maxLength: 100
+        cost:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,10}(?:\.\d{0,2})?$
+          description: Current market price
+        lead_time_days:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: 0
+          format: int64
+          description: Estimated lead time in days
+        url:
+          oneOf:
+          - type: string
+            format: uri
+            maxLength: 200
+          - type: string
+            maxLength: 0
+    PatchedVendorRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 255
+        website:
+          oneOf:
+          - type: string
+            format: uri
+            maxLength: 200
+          - type: string
+            maxLength: 0
+        contact_email:
+          oneOf:
+          - type: string
+            format: email
+            maxLength: 254
+          - type: string
+            maxLength: 0
+    Project:
+      type: object
+      description: |-
+        Primary Serializer for Project data.
+        Provides nested snapshot history and aggregated snapshot counts.
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        job_id:
+          type: string
+          maxLength: 50
+        name:
+          type: string
+          maxLength: 200
+        description:
+          type: string
+          nullable: true
+        portfolio_img:
+          type: string
+          format: uri
+          nullable: true
+        site:
+          type: integer
+          nullable: true
+        site_detail:
+          allOf:
+          - $ref: '#/components/schemas/Site'
+          readOnly: true
+        address_line1:
+          type: string
+          maxLength: 255
+        address_line2:
+          type: string
+          maxLength: 255
+        city:
+          type: string
+          maxLength: 100
+        state:
+          type: string
+          title: State / Province
+          maxLength: 100
+        zip_code:
+          type: string
+          title: ZIP / Postal Code
+          maxLength: 20
+        country:
+          type: string
+          maxLength: 100
+        latitude:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,3}(?:\.\d{0,6})?$
+          nullable: true
+        longitude:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,3}(?:\.\d{0,6})?$
+          nullable: true
+        go_live_date:
+          type: string
+          format: date
+          nullable: true
+        status:
+          oneOf:
+          - $ref: '#/components/schemas/StatusEnum'
+          - $ref: '#/components/schemas/BlankEnum'
+        custom_fields: {}
+        snapshot_count:
+          type: integer
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+        snapshots:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProjectSnapshot'
+          readOnly: true
+      required:
+      - created_at
+      - id
+      - job_id
+      - name
+      - site_detail
+      - snapshot_count
+      - snapshots
+      - updated_at
+    ProjectRequest:
+      type: object
+      description: |-
+        Primary Serializer for Project data.
+        Provides nested snapshot history and aggregated snapshot counts.
+      properties:
+        job_id:
+          type: string
+          minLength: 1
+          maxLength: 50
+        name:
+          type: string
+          minLength: 1
+          maxLength: 200
+        description:
+          type: string
+          nullable: true
+        portfolio_img:
+          type: string
+          format: binary
+          nullable: true
+        site:
+          type: integer
+          nullable: true
+        address_line1:
+          type: string
+          maxLength: 255
+        address_line2:
+          type: string
+          maxLength: 255
+        city:
+          type: string
+          maxLength: 100
+        state:
+          type: string
+          title: State / Province
+          maxLength: 100
+        zip_code:
+          type: string
+          title: ZIP / Postal Code
+          maxLength: 20
+        country:
+          type: string
+          maxLength: 100
+        latitude:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,3}(?:\.\d{0,6})?$
+          nullable: true
+        longitude:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,3}(?:\.\d{0,6})?$
+          nullable: true
+        go_live_date:
+          type: string
+          format: date
+          nullable: true
+        status:
+          oneOf:
+          - $ref: '#/components/schemas/StatusEnum'
+          - $ref: '#/components/schemas/BlankEnum'
+        custom_fields: {}
+      required:
+      - job_id
+      - name
+    ProjectSnapshot:
+      type: object
+      description: Lightweight Snapshot representation used within Project list views.
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          maxLength: 200
+        date:
+          type: string
+          format: date
+      required:
+      - date
+      - id
+      - name
+    ProjectSnapshotRequest:
+      type: object
+      description: Lightweight Snapshot representation used within Project list views.
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 200
+        date:
+          type: string
+          format: date
+      required:
+      - date
+      - name
+    ScopeEnum:
+      enum:
+      - type
+      - instance
+      - both
+      type: string
+      description: |-
+        * `type` - Asset Type (Catalog)
+        * `instance` - Asset Instance (Project)
+        * `both` - Both
+    Site:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        site_id:
+          type: string
+          maxLength: 100
+        name:
+          type: string
+          maxLength: 200
+        project_count:
+          type: integer
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - created_at
+      - id
+      - project_count
+      - site_id
+      - updated_at
+    SiteRequest:
+      type: object
+      properties:
+        site_id:
+          type: string
+          minLength: 1
+          maxLength: 100
+        name:
+          type: string
+          maxLength: 200
+      required:
+      - site_id
+    Snapshot:
+      type: object
+      description: |-
+        Serializer for Project Snapshots.
+        Includes an aggregated count of all asset instances within the snapshot.
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        project:
+          type: integer
+        name:
+          type: string
+          maxLength: 200
+        date:
+          type: string
+          format: date
+        instance_count:
+          type: integer
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - created_at
+      - date
+      - id
+      - instance_count
+      - name
+      - project
+    SnapshotRequest:
+      type: object
+      description: |-
+        Serializer for Project Snapshots.
+        Includes an aggregated count of all asset instances within the snapshot.
+      properties:
+        project:
+          type: integer
+        name:
+          type: string
+          minLength: 1
+          maxLength: 200
+        date:
+          type: string
+          format: date
+      required:
+      - date
+      - name
+      - project
+    StatusEnum:
+      enum:
+      - red
+      - yellow
+      - green
+      - blue
+      type: string
+      description: |-
+        * `red` - Red
+        * `yellow` - Yellow
+        * `green` - Green
+        * `blue` - Blue
+    UnitTypeEnum:
+      enum:
+      - none
+      - autodesk.spec.aec:length-2.0.0
+      - autodesk.spec.aec:distance-1.0.0
+      - autodesk.spec.aec:area-2.0.0
+      - autodesk.spec.aec:volume-2.0.0
+      - autodesk.spec.aec:mass-2.0.0
+      - autodesk.spec.aec:massDensity-2.0.0
+      - autodesk.spec.aec:angle-2.0.0
+      - autodesk.spec.aec:slope-2.0.0
+      - autodesk.spec.aec:number-2.0.0
+      type: string
+      description: |-
+        * `none` - No Unit (Text/Bool/Int)
+        * `autodesk.spec.aec:length-2.0.0` - Length
+        * `autodesk.spec.aec:distance-1.0.0` - Distance
+        * `autodesk.spec.aec:area-2.0.0` - Area
+        * `autodesk.spec.aec:volume-2.0.0` - Volume
+        * `autodesk.spec.aec:mass-2.0.0` - Mass / Weight
+        * `autodesk.spec.aec:massDensity-2.0.0` - Density
+        * `autodesk.spec.aec:angle-2.0.0` - Angle
+        * `autodesk.spec.aec:slope-2.0.0` - Slope
+        * `autodesk.spec.aec:number-2.0.0` - Number (Unitless)
+    User:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        username:
+          type: string
+          description: Required. 150 characters or fewer. Letters, digits and @/./+/-/_
+            only.
+          pattern: ^[\w.@+-]+$
+          maxLength: 150
+        email:
+          type: string
+          format: email
+        first_name:
+          type: string
+          maxLength: 150
+        last_name:
+          type: string
+          maxLength: 150
+        settings:
+          $ref: '#/components/schemas/UserSettings'
+      required:
+      - email
+      - id
+      - username
+    UserRequest:
+      type: object
+      properties:
+        username:
+          type: string
+          minLength: 1
+          description: Required. 150 characters or fewer. Letters, digits and @/./+/-/_
+            only.
+          pattern: ^[\w.@+-]+$
+          maxLength: 150
+        email:
+          type: string
+          format: email
+          minLength: 1
+        password:
+          type: string
+          writeOnly: true
+          minLength: 1
+        first_name:
+          type: string
+          maxLength: 150
+        last_name:
+          type: string
+          maxLength: 150
+        settings:
+          $ref: '#/components/schemas/UserSettingsRequest'
+      required:
+      - email
+      - password
+      - username
+    UserSettings:
+      type: object
+      properties:
+        length_unit:
+          $ref: '#/components/schemas/LengthUnitEnum'
+        area_unit:
+          $ref: '#/components/schemas/AreaUnitEnum'
+        volume_unit:
+          $ref: '#/components/schemas/VolumeUnitEnum'
+        mass_unit:
+          $ref: '#/components/schemas/MassUnitEnum'
+    UserSettingsRequest:
+      type: object
+      properties:
+        length_unit:
+          $ref: '#/components/schemas/LengthUnitEnum'
+        area_unit:
+          $ref: '#/components/schemas/AreaUnitEnum'
+        volume_unit:
+          $ref: '#/components/schemas/VolumeUnitEnum'
+        mass_unit:
+          $ref: '#/components/schemas/MassUnitEnum'
+    Vendor:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          maxLength: 255
+        website:
+          oneOf:
+          - type: string
+            format: uri
+            maxLength: 200
+          - type: string
+            maxLength: 0
+        contact_email:
+          oneOf:
+          - type: string
+            format: email
+            maxLength: 254
+          - type: string
+            maxLength: 0
+      required:
+      - id
+      - name
+    VendorProduct:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        asset_name:
+          type: string
+          readOnly: true
+        vendor_name:
+          type: string
+          readOnly: true
+        sku:
+          type: string
+          description: Vendor's internal SKU
+          maxLength: 100
+        cost:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,10}(?:\.\d{0,2})?$
+          description: Current market price
+        lead_time_days:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: 0
+          format: int64
+          description: Estimated lead time in days
+        url:
+          oneOf:
+          - type: string
+            format: uri
+            maxLength: 200
+          - type: string
+            maxLength: 0
+      required:
+      - asset_name
+      - cost
+      - id
+      - vendor_name
+    VendorProductRequest:
+      type: object
+      properties:
+        asset_id:
+          type: integer
+          writeOnly: true
+        vendor_id:
+          type: integer
+          writeOnly: true
+        sku:
+          type: string
+          description: Vendor's internal SKU
+          maxLength: 100
+        cost:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,10}(?:\.\d{0,2})?$
+          description: Current market price
+        lead_time_days:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: 0
+          format: int64
+          description: Estimated lead time in days
+        url:
+          oneOf:
+          - type: string
+            format: uri
+            maxLength: 200
+          - type: string
+            maxLength: 0
+      required:
+      - asset_id
+      - cost
+      - vendor_id
+    VendorRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 255
+        website:
+          oneOf:
+          - type: string
+            format: uri
+            maxLength: 200
+          - type: string
+            maxLength: 0
+        contact_email:
+          oneOf:
+          - type: string
+            format: email
+            maxLength: 254
+          - type: string
+            maxLength: 0
+      required:
+      - name
+    VolumeUnitEnum:
+      enum:
+      - cu_m
+      - cu_ft
+      type: string
+      description: |-
+        * `cu_m` - Cubic Meters (m³)
+        * `cu_ft` - Cubic Feet (ft³)
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-Key
+      description: 'Required on /api/ routes when API_KEY_AUTH_ENABLED is true. Create
+        a key with: python manage.py create_apikey "Local Dev"'
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: sessionid
+    tokenAuth:
+      type: apiKey
+      in: header
+      name: Authorization
+      description: Token-based authentication with required prefix "Token"
+tags:
+- name: assets
+  description: 'The catalog: what a thing is.'
+- name: projects
+  description: 'The fleet: where things are installed.'
+- name: access
+  description: API keys and authentication.
+- name: users
+  description: User accounts.
