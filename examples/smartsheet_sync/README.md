@@ -1,7 +1,7 @@
 # Example: Smartsheet Sync
 
-Two management commands that pull a fleet of projects, and the assets installed
-at each one, out of Smartsheet and into this framework.
+Two management commands that pull a portfolio of projects, and the assets
+installed at each one, out of Smartsheet and into this framework.
 
 They are here as a **worked example**. Smartsheet is incidental — the shape of
 the code is the point, and it transfers to Airtable, a Google Sheet, a nightly

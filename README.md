@@ -2,10 +2,9 @@
 
 [![CI](https://github.com/TripleZeroLabs/Ephany-Framework/actions/workflows/ci.yml/badge.svg)](https://github.com/TripleZeroLabs/Ephany-Framework/actions/workflows/ci.yml)
 
-Track a standard kit of parts across a fleet of near-identical projects -
-data centres, coworking floors, retail stores. Anywhere the same catalog of
-assets is installed at many sites and someone needs to know what is actually
-where.
+Track a standard kit of parts across a portfolio of sites - data centres,
+coworking floors, retail stores. Anywhere the same catalog of assets is
+installed at many locations and someone needs to know what is actually where.
 
 > Working on this with a coding agent? Point it at [AGENTS.md](AGENTS.md).
 
@@ -19,7 +18,7 @@ API designed to be consumed by modern frontend applications (desktop, web, mobil
 *   **API First:** Fully decoupled architecture using Django REST Framework.
 *   **Self-Describing:** A complete OpenAPI 3 schema is served at `/api/schema/` and committed to the repo as `openapi.yaml`, so clients, SDKs, and coding agents can discover the API without reading the source.
 *   **Worked Examples:** The [`examples/`](examples/) folder ships readable, runnable integrations you can copy and point at your own systems.
-*   **Fleet Rollups:** `GET /api/assets/{id}/fleet/` answers "a manufacturer discontinued this part - how many are in the field, where, and what does replacing them cost?" in one request.
+*   **Portfolio Summaries:** `GET /api/assets/{id}/summary/` answers "a manufacturer discontinued this part - how many are in the field, where, and what does replacing them cost?" in one request.
 
 ## Tech Stack
 
@@ -95,9 +94,9 @@ python manage.py migrate
 ### 6. Load Demo Data (Recommended)
 
 A fresh database is empty, which makes the API hard to explore. This loads a
-demo fleet - 15 sites across three verticals, 20 catalog assets, and roughly
-4,000 asset instances, with deliberate deviations between sites so the drift a
-fleet tool exists to surface is actually visible:
+demo portfolio - 15 sites across three verticals, 20 catalog assets, and
+roughly 4,000 asset instances, with deliberate deviations between sites so the
+drift this exists to surface is actually visible:
 
 ```
 python manage.py seed_demo
@@ -134,13 +133,13 @@ useful question sits between them: *a manufacturer just discontinued a part -
 how exposed am I?*
 
 ```
-curl http://127.0.0.1:8000/api/assets/40/fleet/
+curl http://127.0.0.1:8000/api/assets/40/summary/
 ```
 
 ```json
 {
   "asset": { "type_id": "DSP-055", "name": "55in Display", "manufacturer": "Aurora Systems" },
-  "summary": { "total_installed": 49, "site_count": 11, "basis": "latest snapshot per project" },
+  "totals": { "total_installed": 49, "site_count": 11, "basis": "latest snapshot per project" },
   "replacement": {
     "vendor": "Meridian Supply",
     "unit_cost": "786.00",
@@ -157,9 +156,9 @@ curl http://127.0.0.1:8000/api/assets/40/fleet/
 One request, three queries. Run `python manage.py seed_demo` and the numbers
 above are what you get.
 
-Note `summary.basis`. Each project holds several snapshots of the same physical
+Note `totals.basis`. Each project holds several snapshots of the same physical
 installation - design intent, procurement, as-built - so a naive count would
-report every unit once per snapshot. The rollup counts the newest snapshot of
+report every unit once per snapshot. The summary counts the newest snapshot of
 each project and says so in the response.
 
 ---
@@ -330,7 +329,7 @@ This works as-is on a fresh clone. Once anonymous access is off — that is, onc
 ]
 ```
 
-For worked examples — including importing a whole fleet of projects from an external system of record — see the [`examples/`](examples/) folder.
+For worked examples — including importing a whole portfolio of projects from an external system of record — see the [`examples/`](examples/) folder.
 
 ---
 
@@ -343,7 +342,7 @@ exist to be read and copied. Nothing in the core apps depends on them.
 list, search, and filter assets from outside Django, covering pagination and
 credentials. Run `check_connection.py` first.
 
-`examples/smartsheet_sync/` imports a fleet of projects and their asset
+`examples/smartsheet_sync/` imports a portfolio of projects and their asset
 snapshots from Smartsheet. Smartsheet is incidental — the code is split so that
 one small module knows the external API and everything else is mapping and
 write logic, which is the part that transfers to Airtable, a Google Sheet, a

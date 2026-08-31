@@ -7,7 +7,7 @@ directory and the framework still runs.
 | Example | What it demonstrates |
 | --- | --- |
 | [`api_scripts/`](api_scripts/) | Talking to the API from a standalone Python script: pagination, filtering, credentials |
-| [`smartsheet_sync/`](smartsheet_sync/) | Importing a fleet of projects and their asset snapshots from an external system of record |
+| [`smartsheet_sync/`](smartsheet_sync/) | Importing a portfolio of projects and their asset snapshots from an external system of record |
 
 Start with `api_scripts/` if you are new here — `check_connection.py` is the
 shortest path to knowing your setup works.
@@ -28,7 +28,7 @@ changes.
 ## Writing your own importer
 
 The recurring problem this framework has to solve: some other system already
-knows things about your fleet — which sites exist, what got installed where,
+knows things about your portfolio — which sites exist, what got installed where,
 which projects go live when — and you need that reflected here without hand
 typing it.
 

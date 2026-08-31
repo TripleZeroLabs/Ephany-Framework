@@ -3,7 +3,7 @@ info:
   title: Ephany Framework API
   version: 0.1.0
   description: |-
-    Track a standard kit of parts across a fleet of near-identical projects.
+    Track a standard kit of parts across a portfolio of sites.
 
     The core chain is **Asset** (catalog definition) -> **Project** -> **Snapshot**
     (a point in time) -> **AssetInstance** (one occurrence of a catalog asset in
@@ -239,11 +239,12 @@ paths:
       responses:
         '204':
           description: No response body
-  /api/assets/{id}/fleet/:
+  /api/assets/{id}/summary/:
     get:
-      operationId: assets_fleet_retrieve
+      operationId: assets_summary_retrieve
       description: |-
-        Counts every installed unit of one catalog asset, grouped by site.
+        Aggregates one catalog asset across every project: how many are installed,
+        where, and what replacing them would cost.
 
         Answers the question a catalog cannot: a manufacturer discontinues a part, and
         you need to know how many are in the field, where, and what replacing them
@@ -252,11 +253,11 @@ paths:
         Counts the **latest snapshot of each project**. A project holds several
         snapshots of the same physical installation - design intent, procurement,
         as-built - so counting across all of them would multiply every unit by the
-        number of snapshots. The `summary.basis` field states this in the response.
+        number of snapshots. The `totals.basis` field states this in the response.
 
         Sites with none installed are omitted. Knowing where an asset *should* be but
         is not is a question about a standard, which this endpoint has no concept of.
-      summary: Where this asset is installed across the fleet
+      summary: Aggregate view of this asset across the portfolio
       parameters:
       - in: path
         name: id
@@ -275,7 +276,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/FleetRollup'
+                $ref: '#/components/schemas/AssetSummary'
           description: ''
   /api/assets/all_categories/:
     get:
@@ -3318,6 +3319,28 @@ components:
       - model
       - name
       - type_id
+    AssetSummary:
+      type: object
+      description: Where one catalog asset is installed across every project.
+      properties:
+        asset:
+          $ref: '#/components/schemas/SummaryAsset'
+        totals:
+          $ref: '#/components/schemas/SummaryTotals'
+        replacement:
+          allOf:
+          - $ref: '#/components/schemas/SummaryReplacement'
+          nullable: true
+          description: Null when no vendor has quoted this asset.
+        sites:
+          type: array
+          items:
+            $ref: '#/components/schemas/SummarySite'
+      required:
+      - asset
+      - replacement
+      - sites
+      - totals
     AuthTokenRequest:
       type: object
       properties:
@@ -3396,159 +3419,6 @@ components:
         * `bool` - Yes / No
         * `choice` - Picklist (Single)
         * `multi_choice` - Picklist (Multiple)
-    FleetAsset:
-      type: object
-      properties:
-        id:
-          type: integer
-        type_id:
-          type: string
-        name:
-          type: string
-        manufacturer:
-          type: string
-          nullable: true
-        model:
-          type: string
-      required:
-      - id
-      - manufacturer
-      - model
-      - name
-      - type_id
-    FleetProject:
-      type: object
-      properties:
-        job_id:
-          type: string
-        name:
-          type: string
-        status:
-          type: string
-      required:
-      - job_id
-      - name
-      - status
-    FleetQuote:
-      type: object
-      properties:
-        vendor:
-          type: string
-        sku:
-          type: string
-        unit_cost:
-          type: string
-          format: decimal
-          pattern: ^-?\d{0,10}(?:\.\d{0,2})?$
-        lead_time_days:
-          type: integer
-      required:
-      - lead_time_days
-      - sku
-      - unit_cost
-      - vendor
-    FleetReplacement:
-      type: object
-      properties:
-        vendor:
-          type: string
-          description: Vendor offering the lowest unit cost.
-        unit_cost:
-          type: string
-          format: decimal
-          pattern: ^-?\d{0,10}(?:\.\d{0,2})?$
-        lead_time_days:
-          type: integer
-        estimated_total:
-          type: string
-          format: decimal
-          pattern: ^-?\d{0,12}(?:\.\d{0,2})?$
-          description: Lowest unit cost multiplied by total_installed. A floor, not
-            a forecast.
-        quotes:
-          type: array
-          items:
-            $ref: '#/components/schemas/FleetQuote'
-      required:
-      - estimated_total
-      - lead_time_days
-      - quotes
-      - unit_cost
-      - vendor
-    FleetRollup:
-      type: object
-      description: Where one catalog asset is installed across every project.
-      properties:
-        asset:
-          $ref: '#/components/schemas/FleetAsset'
-        summary:
-          $ref: '#/components/schemas/FleetSummary'
-        replacement:
-          allOf:
-          - $ref: '#/components/schemas/FleetReplacement'
-          nullable: true
-          description: Null when no vendor has quoted this asset.
-        sites:
-          type: array
-          items:
-            $ref: '#/components/schemas/FleetSite'
-      required:
-      - asset
-      - replacement
-      - sites
-      - summary
-    FleetSite:
-      type: object
-      properties:
-        site_id:
-          type: string
-          nullable: true
-        site_name:
-          type: string
-          nullable: true
-        project:
-          $ref: '#/components/schemas/FleetProject'
-        snapshot:
-          $ref: '#/components/schemas/FleetSnapshot'
-        quantity:
-          type: integer
-      required:
-      - project
-      - quantity
-      - site_id
-      - site_name
-      - snapshot
-    FleetSnapshot:
-      type: object
-      properties:
-        id:
-          type: integer
-        name:
-          type: string
-        date:
-          type: string
-          format: date
-      required:
-      - date
-      - id
-      - name
-    FleetSummary:
-      type: object
-      properties:
-        total_installed:
-          type: integer
-          description: Units installed across the fleet, counted once each.
-        site_count:
-          type: integer
-          description: Sites with at least one installed.
-        basis:
-          type: string
-          description: Which snapshots were counted. Currently always the latest per
-            project.
-      required:
-      - basis
-      - site_count
-      - total_installed
     LengthUnitEnum:
       enum:
       - mm
@@ -4692,6 +4562,137 @@ components:
         * `yellow` - Yellow
         * `green` - Green
         * `blue` - Blue
+    SummaryAsset:
+      type: object
+      properties:
+        id:
+          type: integer
+        type_id:
+          type: string
+        name:
+          type: string
+        manufacturer:
+          type: string
+          nullable: true
+        model:
+          type: string
+      required:
+      - id
+      - manufacturer
+      - model
+      - name
+      - type_id
+    SummaryProject:
+      type: object
+      properties:
+        job_id:
+          type: string
+        name:
+          type: string
+        status:
+          type: string
+      required:
+      - job_id
+      - name
+      - status
+    SummaryQuote:
+      type: object
+      properties:
+        vendor:
+          type: string
+        sku:
+          type: string
+        unit_cost:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,10}(?:\.\d{0,2})?$
+        lead_time_days:
+          type: integer
+      required:
+      - lead_time_days
+      - sku
+      - unit_cost
+      - vendor
+    SummaryReplacement:
+      type: object
+      properties:
+        vendor:
+          type: string
+          description: Vendor offering the lowest unit cost.
+        unit_cost:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,10}(?:\.\d{0,2})?$
+        lead_time_days:
+          type: integer
+        estimated_total:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,12}(?:\.\d{0,2})?$
+          description: Lowest unit cost multiplied by total_installed. A floor, not
+            a forecast.
+        quotes:
+          type: array
+          items:
+            $ref: '#/components/schemas/SummaryQuote'
+      required:
+      - estimated_total
+      - lead_time_days
+      - quotes
+      - unit_cost
+      - vendor
+    SummarySite:
+      type: object
+      properties:
+        site_id:
+          type: string
+          nullable: true
+        site_name:
+          type: string
+          nullable: true
+        project:
+          $ref: '#/components/schemas/SummaryProject'
+        snapshot:
+          $ref: '#/components/schemas/SummarySnapshot'
+        quantity:
+          type: integer
+      required:
+      - project
+      - quantity
+      - site_id
+      - site_name
+      - snapshot
+    SummarySnapshot:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        date:
+          type: string
+          format: date
+      required:
+      - date
+      - id
+      - name
+    SummaryTotals:
+      type: object
+      properties:
+        total_installed:
+          type: integer
+          description: Units installed across the portfolio, counted once each.
+        site_count:
+          type: integer
+          description: Sites with at least one installed.
+        basis:
+          type: string
+          description: Which snapshots were counted. Currently always the latest per
+            project.
+      required:
+      - basis
+      - site_count
+      - total_installed
     UnitTypeEnum:
       enum:
       - none
@@ -4947,7 +4948,7 @@ tags:
 - name: assets
   description: 'The catalog: what a thing is.'
 - name: projects
-  description: 'The fleet: where things are installed.'
+  description: 'The portfolio: where things are installed.'
 - name: access
   description: API keys and authentication.
 - name: users

@@ -192,7 +192,7 @@ REST_FRAMEWORK = {
 #   python manage.py spectacular --file openapi.yaml
 SPECTACULAR_SETTINGS = {
     "TITLE": "Ephany Framework API",
-    "DESCRIPTION": """Track a standard kit of parts across a fleet of near-identical projects.
+    "DESCRIPTION": """Track a standard kit of parts across a portfolio of sites.
 
 The core chain is **Asset** (catalog definition) -> **Project** -> **Snapshot**
 (a point in time) -> **AssetInstance** (one occurrence of a catalog asset in
@@ -214,7 +214,7 @@ assets and instances carry `custom_fields` validated against the
     # via the extension in access/schema.py, so it cannot drift from the code.
     "TAGS": [
         {"name": "assets", "description": "The catalog: what a thing is."},
-        {"name": "projects", "description": "The fleet: where things are installed."},
+        {"name": "projects", "description": "The portfolio: where things are installed."},
         {"name": "access", "description": "API keys and authentication."},
         {"name": "users", "description": "User accounts."},
     ],

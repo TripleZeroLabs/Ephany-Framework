@@ -1,10 +1,10 @@
 """
-Load a believable fleet of demo data.
+Load a believable demo portfolio.
 
 A fresh clone gives you an empty admin and an API that returns
 `{"count": 0, "results": []}`, which tells you nothing about what the framework
-is for. This command fills it with three verticals of near-identical sites so
-the shape of the data — a standard kit of parts, repeated across a fleet, with
+is for. This command fills it with three verticals of standardized sites so the
+shape of the data — a standard kit of parts, repeated across a portfolio, with
 deviations — is visible immediately.
 
 Usage:
@@ -134,7 +134,7 @@ VENDORS = [
 
 # The standard kit for each vertical. This is the point of the whole dataset:
 # every site of a given type gets the same parts list, and the drift between
-# them is what a fleet tool exists to surface.
+# them is what this system exists to surface.
 KITS = {
     "Edge Data Centre": [
         ("RK-4200", 4), ("PDU-3020", 8), ("UPS-5000", 2), ("CRAC-201", 2),
@@ -177,7 +177,7 @@ PHASES = [
     ("Phase 3: As-Built", -10),
 ]
 
-# Deliberate deviations from the standard kit, so the fleet is not uniform.
+# Deliberate deviations from the standard kit, so the portfolio is not uniform.
 # (site_id, type_id, quantity_delta) — negative removes, positive adds.
 DEVIATIONS = [
     ("EDC-003", "CRAC-201", -1),    # one cooling unit never installed
@@ -192,7 +192,7 @@ DEVIATIONS = [
 
 class Command(BaseCommand):
     help = (
-        "Load a demo fleet: 15 sites across 3 verticals, each built from a "
+        "Load a demo portfolio: 15 sites across 3 verticals, each built from a "
         "standard kit of parts, with deliberate deviations between them."
     )
 
@@ -208,7 +208,7 @@ class Command(BaseCommand):
         if options["flush"]:
             self._flush()
 
-        self.stdout.write("Seeding demo fleet...")
+        self.stdout.write("Seeding demo portfolio...")
 
         categories = self._categories()
         manufacturers = self._manufacturers()
@@ -219,7 +219,7 @@ class Command(BaseCommand):
         sites, projects = self._sites_and_projects()
         instances = self._snapshots(projects, assets)
 
-        self.stdout.write(self.style.SUCCESS("\nDone. The fleet now contains:"))
+        self.stdout.write(self.style.SUCCESS("\nDone. The portfolio now contains:"))
         self.stdout.write(f"  {len(manufacturers):>5} manufacturers")
         self.stdout.write(f"  {len(categories):>5} categories")
         self.stdout.write(f"  {len(assets):>5} catalog assets")
@@ -343,7 +343,7 @@ class Command(BaseCommand):
                     },
                 )
 
-    # -- fleet ---------------------------------------------------------------
+    # -- portfolio -----------------------------------------------------------
 
     def _sites_and_projects(self):
         today = datetime.date.today()
@@ -376,7 +376,7 @@ class Command(BaseCommand):
         Three snapshots per project, so each site has a history.
 
         Earlier phases carry the standard kit; the as-built snapshot carries
-        the deviations, which is where a fleet report earns its keep.
+        the deviations, which is where a portfolio report earns its keep.
         """
         today = datetime.date.today()
         deviations = {}

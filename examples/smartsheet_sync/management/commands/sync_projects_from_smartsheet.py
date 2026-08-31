@@ -2,8 +2,8 @@
 EXAMPLE INTEGRATION — one-way import from Smartsheet into Django Projects.
 
 This file is a worked example, not core framework code. It exists to show the
-shape of an importer that keeps a fleet of Project records in sync with an
-external system of record. Read it, copy it, point it at whatever you actually
+shape of an importer that keeps a portfolio of Project records in sync with
+an external system of record. Read it, copy it, point it at whatever you actually
 use — Airtable, a Google Sheet, a nightly CSV drop, an internal REST API.
 
 ## The pattern

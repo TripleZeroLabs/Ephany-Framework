@@ -102,7 +102,7 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements.txt
 
-      - name: Seed a demo fleet
+      - name: Seed a demo portfolio
         run: |
           python manage.py migrate
           python manage.py seed_demo

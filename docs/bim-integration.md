@@ -19,7 +19,7 @@ possible.
 
 **Storage is always base metric.** Millimetres for length, kilograms for mass,
 square metres for area. One representation in the database means values are
-directly comparable across a fleet regardless of who entered them.
+directly comparable across a portfolio regardless of who entered them.
 
 **Input and output follow the user.** Conversion happens in the serializer
 layer — see `UnitConverter` in [`ephany_framework/utils.py`](../ephany_framework/utils.py)

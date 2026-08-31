@@ -5,7 +5,7 @@ from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
 from rest_framework.response import Response
 from rest_framework.filters import SearchFilter
 from ephany_framework.filters import StableOrderingFilter
-from .fleet import FleetRollupSerializer, fleet_rollup
+from .summary import AssetSummarySerializer, asset_summary
 from django_filters.rest_framework import DjangoFilterBackend
 
 from .models import (
@@ -119,9 +119,9 @@ class AssetViewSet(viewsets.ModelViewSet):
     serializer_class = AssetSerializer
 
     def get_queryset(self):
-        # The fleet rollup reads only the manufacturer name, so the file and
+        # The summary reads only the manufacturer name, so the file and
         # assembly prefetches above would be work done and thrown away.
-        if self.action == "fleet":
+        if self.action == "summary":
             return Asset.objects.select_related("manufacturer")
         return super().get_queryset()
 
@@ -162,9 +162,10 @@ class AssetViewSet(viewsets.ModelViewSet):
     ]
 
     @extend_schema(
-        summary="Where this asset is installed across the fleet",
+        summary="Aggregate view of this asset across the portfolio",
         description=(
-            """Counts every installed unit of one catalog asset, grouped by site.
+            """Aggregates one catalog asset across every project: how many are installed,
+where, and what replacing them would cost.
 
 Answers the question a catalog cannot: a manufacturer discontinues a part, and
 you need to know how many are in the field, where, and what replacing them
@@ -173,20 +174,20 @@ costs.
 Counts the **latest snapshot of each project**. A project holds several
 snapshots of the same physical installation - design intent, procurement,
 as-built - so counting across all of them would multiply every unit by the
-number of snapshots. The `summary.basis` field states this in the response.
+number of snapshots. The `totals.basis` field states this in the response.
 
 Sites with none installed are omitted. Knowing where an asset *should* be but
 is not is a question about a standard, which this endpoint has no concept of."""
         ),
-        responses={200: FleetRollupSerializer},
+        responses={200: AssetSummarySerializer},
     )
     @action(detail=True, methods=["get"])
-    def fleet(self, request, pk=None):
+    def summary(self, request, pk=None):
         """Where this catalog asset is installed, and what replacing it costs."""
         # Rendered through the serializer rather than returned raw, so the
         # response cannot disagree with the schema that documents it - money
         # in particular serializes as a string, not a lossy float.
-        payload = FleetRollupSerializer(fleet_rollup(self.get_object())).data
+        payload = AssetSummarySerializer(asset_summary(self.get_object())).data
         return Response(payload, status=status.HTTP_200_OK)
 
     @extend_schema(

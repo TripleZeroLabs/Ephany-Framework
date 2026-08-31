@@ -57,7 +57,7 @@ than suppressing the warning; the point is that the schema does not lie.
   otherwise.
 - **`custom_fields`.** Keys must exist in `AssetAttribute` and match its
   declared type. This is deliberate: it is what keeps a field meaning the same
-  thing across an entire fleet.
+  thing across an entire portfolio.
 - **Authentication is one layer.** `access/authentication.py` establishes
   identity, `access/permissions.py` decides access. Please do not add checks in
   middleware — the split is what caused the bugs `access/tests.py` now pins.
