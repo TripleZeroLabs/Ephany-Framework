@@ -1,0 +1,126 @@
+name: CI
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        # 3.12 is the documented minimum; 3.13 catches deprecations early.
+        python-version: ["3.12", "3.13"]
+
+    env:
+      DJANGO_SECRET_KEY: ci-only-key-not-used-for-anything-real
+      DJANGO_DEBUG: "True"
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Django checks
+        run: python manage.py check
+
+      - name: Migrations are complete
+        # Fails if a model change was committed without its migration. Meta
+        # option changes count, even though they alter no tables.
+        run: python manage.py makemigrations --check --dry-run
+
+      - name: Tests
+        run: python manage.py test --verbosity 2
+
+      - name: Schema is valid and fully describable
+        # --fail-on-warn fails when an endpoint cannot be described accurately,
+        # which is what keeps the committed spec honest rather than decorative.
+        run: python manage.py spectacular --file /tmp/schema.yaml --validate --fail-on-warn
+
+      - name: Committed openapi.yaml matches the code
+        # The spec is generated but committed, so clients and coding agents can
+        # read it straight from the repo without running anything. That only
+        # works if it cannot drift.
+        run: |
+          if ! diff -u openapi.yaml /tmp/schema.yaml; then
+            echo ""
+            echo "::error::openapi.yaml is out of date. Regenerate it with:"
+            echo "::error::  python manage.py spectacular --file openapi.yaml --validate --fail-on-warn"
+            exit 1
+          fi
+
+  deploy-checks:
+    # Informational: Django's deploy checks are warnings, so they do not fail
+    # the build. They are surfaced here so a reviewer can see them.
+    runs-on: ubuntu-latest
+
+    env:
+      DJANGO_SECRET_KEY: ci-only-key-not-used-for-anything-real
+      DJANGO_DEBUG: "False"
+      ALLOWED_HOSTS: localhost
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Deployment checks
+        run: python manage.py check --deploy || true
+
+  examples:
+    # The sample scripts are the first thing a new user runs. If they break,
+    # that is the worst possible first impression.
+    runs-on: ubuntu-latest
+
+    env:
+      DJANGO_SECRET_KEY: ci-only-key-not-used-for-anything-real
+      DJANGO_DEBUG: "True"
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Seed a demo fleet
+        run: |
+          python manage.py migrate
+          python manage.py seed_demo
+
+      - name: Start the server
+        run: |
+          python manage.py runserver 8000 --noreload &
+          for _ in $(seq 1 30); do
+            curl -sf -o /dev/null http://127.0.0.1:8000/api/assets/ && break
+            sleep 1
+          done
+
+      - name: Example scripts run against it
+        working-directory: examples/api_scripts
+        env:
+          EPHANY_BASE_URL: http://127.0.0.1:8000/api
+        run: |
+          python check_connection.py
+          python assets_get.py
+          python assets_get.py --search rack
+          python assets_search.py RK-4200

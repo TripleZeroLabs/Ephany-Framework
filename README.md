@@ -1,5 +1,14 @@
 # Ephany Framework
 
+[![CI](https://github.com/TripleZeroLabs/Ephany-Framework/actions/workflows/ci.yml/badge.svg)](https://github.com/TripleZeroLabs/Ephany-Framework/actions/workflows/ci.yml)
+
+Track a standard kit of parts across a fleet of near-identical projects -
+data centres, coworking floors, retail stores. Anywhere the same catalog of
+assets is installed at many sites and someone needs to know what is actually
+where.
+
+> Working on this with a coding agent? Point it at [AGENTS.md](AGENTS.md).
+
 Ephany Framework is an open-source Asset and Project management system built with Django. It serves as a robust backend 
 API designed to be consumed by modern frontend applications (desktop, web, mobile, or even CLI).
 
@@ -76,13 +85,27 @@ DJANGO_DEBUG=True
 
 See `.env.example` for the full list of supported variables, including the optional Smartsheet sync settings.
 
-### 5. Run Migrations & Server
+### 5. Run Migrations
 
 ```
 python manage.py migrate
 ```
 
-### 6. Create Superuser (Admin Access)
+### 6. Load Demo Data (Recommended)
+
+A fresh database is empty, which makes the API hard to explore. This loads a
+demo fleet - 15 sites across three verticals, 20 catalog assets, and roughly
+4,000 asset instances, with deliberate deviations between sites so the drift a
+fleet tool exists to surface is actually visible:
+
+```
+python manage.py seed_demo
+```
+
+Reload it at any time with `python manage.py seed_demo --flush`. That removes
+only what the command created and leaves records you made yourself alone.
+
+### 7. Create Superuser (Admin Access)
 
 Since the database is local to your environment, you need to create your own administrative account to access the Django Admin panel.
 
@@ -92,7 +115,7 @@ python manage.py createsuperuser
 
 Follow the prompts to set your username, email, and password.
 
-### 7. Run the Server
+### 8. Run the Server
 
 ```
 python manage.py runserver
@@ -301,6 +324,9 @@ python manage.py sync_projects_from_smartsheet <API_KEY> --dry-run
 
 ## Documentation
 
+* [AGENTS.md](AGENTS.md) - architecture, the domain model, and the rules that
+  are easy to break. Written for coding agents, useful to anyone.
+* [CONTRIBUTING.md](CONTRIBUTING.md) - setup and what CI checks.
 * [BIM Integration and Units](docs/bim-integration.md) — how `AssetAttribute`
   carries Autodesk ForgeTypeId schemas, and how values convert between a user's
   preferred units and the base-metric values stored in the database.
@@ -322,7 +348,13 @@ This project handles user-uploaded files (e.g., PDFs and Revit Families for Asse
 
 ## Contributing
 
-We welcome contributions! Please see `CONTRIBUTING.md` (coming soon) for details on how to submit pull requests, report issues, or request features.
+We welcome contributions. See [CONTRIBUTING.md](CONTRIBUTING.md) for how to set
+up, what CI checks, and the few rules that are easy to break - chiefly that
+`openapi.yaml` must be regenerated whenever a serializer, viewset, or route
+changes.
+
+If you are working with a coding agent, [AGENTS.md](AGENTS.md) is the fastest
+orientation to the codebase.
 
 ## License
 
