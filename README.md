@@ -19,6 +19,7 @@ API designed to be consumed by modern frontend applications (desktop, web, mobil
 *   **API First:** Fully decoupled architecture using Django REST Framework.
 *   **Self-Describing:** A complete OpenAPI 3 schema is served at `/api/schema/` and committed to the repo as `openapi.yaml`, so clients, SDKs, and coding agents can discover the API without reading the source.
 *   **Worked Examples:** The [`examples/`](examples/) folder ships readable, runnable integrations you can copy and point at your own systems.
+*   **Fleet Rollups:** `GET /api/assets/{id}/fleet/` answers "a manufacturer discontinued this part - how many are in the field, where, and what does replacing them cost?" in one request.
 
 ## Tech Stack
 
@@ -123,6 +124,43 @@ python manage.py runserver
 
 By default, the API will be available at `http://127.0.0.1:8000/api`.  
 The Admin panel is at `http://127.0.0.1:8000/admin/`.
+
+---
+
+## The question this exists to answer
+
+A catalog tells you what a part is. A project tells you what was installed. The
+useful question sits between them: *a manufacturer just discontinued a part -
+how exposed am I?*
+
+```
+curl http://127.0.0.1:8000/api/assets/40/fleet/
+```
+
+```json
+{
+  "asset": { "type_id": "DSP-055", "name": "55in Display", "manufacturer": "Aurora Systems" },
+  "summary": { "total_installed": 49, "site_count": 11, "basis": "latest snapshot per project" },
+  "replacement": {
+    "vendor": "Meridian Supply",
+    "unit_cost": "786.00",
+    "lead_time_days": 14,
+    "estimated_total": "38514.00"
+  },
+  "sites": [
+    { "site_id": "RTL-001", "quantity": 6, "snapshot": { "name": "Phase 3: As-Built" } },
+    { "site_id": "CWK-005", "quantity": 5, "snapshot": { "name": "Phase 3: As-Built" } }
+  ]
+}
+```
+
+One request, three queries. Run `python manage.py seed_demo` and the numbers
+above are what you get.
+
+Note `summary.basis`. Each project holds several snapshots of the same physical
+installation - design intent, procurement, as-built - so a naive count would
+report every unit once per snapshot. The rollup counts the newest snapshot of
+each project and says so in the response.
 
 ---
 

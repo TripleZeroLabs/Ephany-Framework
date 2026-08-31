@@ -52,6 +52,9 @@ Project (one site's fit-out)
               └── AssetComponentInstance   optional components actually included
 ```
 
+`assets/fleet.py` aggregates across that spine: `GET /api/assets/{id}/fleet/`
+reports where one catalog asset is installed fleet-wide, with replacement cost.
+
 `Site` groups projects at the same physical location. An `AssetInstance` is one
 unit — a row with `Quantity: 12` in a source spreadsheet becomes twelve
 instances, because each can carry its own location, tag, and custom fields.
@@ -88,6 +91,13 @@ fields must use a defined `AssetAttributeChoice`. Adding an ad-hoc key raises
 write. Direct ORM writes bypass this, so seed and migrate in base metric. API
 key requests have no user and therefore no preference: they read and write base
 metric.
+
+**Anything that aggregates across projects must pick one snapshot per project.**
+A project holds several snapshots of the same physical installation, so summing
+across all of them multiplies every unit by the snapshot count and returns a
+wrong number in a correct-looking response. `assets/fleet.py` takes the newest
+per project and states that in `summary.basis`. `assets/test_fleet.py` pins it -
+that test is the only thing standing between this endpoint and a plausible lie.
 
 **Meta option changes need a migration.** `makemigrations` produces an
 `AlterModelOptions` with no schema change, but Django will complain about

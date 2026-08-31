@@ -239,6 +239,44 @@ paths:
       responses:
         '204':
           description: No response body
+  /api/assets/{id}/fleet/:
+    get:
+      operationId: assets_fleet_retrieve
+      description: |-
+        Counts every installed unit of one catalog asset, grouped by site.
+
+        Answers the question a catalog cannot: a manufacturer discontinues a part, and
+        you need to know how many are in the field, where, and what replacing them
+        costs.
+
+        Counts the **latest snapshot of each project**. A project holds several
+        snapshots of the same physical installation - design intent, procurement,
+        as-built - so counting across all of them would multiply every unit by the
+        number of snapshots. The `summary.basis` field states this in the response.
+
+        Sites with none installed are omitted. Knowing where an asset *should* be but
+        is not is a question about a standard, which this endpoint has no concept of.
+      summary: Where this asset is installed across the fleet
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this asset.
+        required: true
+      tags:
+      - assets
+      security:
+      - tokenAuth: []
+      - ApiKeyAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FleetRollup'
+          description: ''
   /api/assets/all_categories/:
     get:
       operationId: assets_all_categories_list
@@ -3358,6 +3396,159 @@ components:
         * `bool` - Yes / No
         * `choice` - Picklist (Single)
         * `multi_choice` - Picklist (Multiple)
+    FleetAsset:
+      type: object
+      properties:
+        id:
+          type: integer
+        type_id:
+          type: string
+        name:
+          type: string
+        manufacturer:
+          type: string
+          nullable: true
+        model:
+          type: string
+      required:
+      - id
+      - manufacturer
+      - model
+      - name
+      - type_id
+    FleetProject:
+      type: object
+      properties:
+        job_id:
+          type: string
+        name:
+          type: string
+        status:
+          type: string
+      required:
+      - job_id
+      - name
+      - status
+    FleetQuote:
+      type: object
+      properties:
+        vendor:
+          type: string
+        sku:
+          type: string
+        unit_cost:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,10}(?:\.\d{0,2})?$
+        lead_time_days:
+          type: integer
+      required:
+      - lead_time_days
+      - sku
+      - unit_cost
+      - vendor
+    FleetReplacement:
+      type: object
+      properties:
+        vendor:
+          type: string
+          description: Vendor offering the lowest unit cost.
+        unit_cost:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,10}(?:\.\d{0,2})?$
+        lead_time_days:
+          type: integer
+        estimated_total:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,12}(?:\.\d{0,2})?$
+          description: Lowest unit cost multiplied by total_installed. A floor, not
+            a forecast.
+        quotes:
+          type: array
+          items:
+            $ref: '#/components/schemas/FleetQuote'
+      required:
+      - estimated_total
+      - lead_time_days
+      - quotes
+      - unit_cost
+      - vendor
+    FleetRollup:
+      type: object
+      description: Where one catalog asset is installed across every project.
+      properties:
+        asset:
+          $ref: '#/components/schemas/FleetAsset'
+        summary:
+          $ref: '#/components/schemas/FleetSummary'
+        replacement:
+          allOf:
+          - $ref: '#/components/schemas/FleetReplacement'
+          nullable: true
+          description: Null when no vendor has quoted this asset.
+        sites:
+          type: array
+          items:
+            $ref: '#/components/schemas/FleetSite'
+      required:
+      - asset
+      - replacement
+      - sites
+      - summary
+    FleetSite:
+      type: object
+      properties:
+        site_id:
+          type: string
+          nullable: true
+        site_name:
+          type: string
+          nullable: true
+        project:
+          $ref: '#/components/schemas/FleetProject'
+        snapshot:
+          $ref: '#/components/schemas/FleetSnapshot'
+        quantity:
+          type: integer
+      required:
+      - project
+      - quantity
+      - site_id
+      - site_name
+      - snapshot
+    FleetSnapshot:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        date:
+          type: string
+          format: date
+      required:
+      - date
+      - id
+      - name
+    FleetSummary:
+      type: object
+      properties:
+        total_installed:
+          type: integer
+          description: Units installed across the fleet, counted once each.
+        site_count:
+          type: integer
+          description: Sites with at least one installed.
+        basis:
+          type: string
+          description: Which snapshots were counted. Currently always the latest per
+            project.
+      required:
+      - basis
+      - site_count
+      - total_installed
     LengthUnitEnum:
       enum:
       - mm
