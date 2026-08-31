@@ -1,6 +1,6 @@
 from django.db import models
 from django.core.exceptions import ValidationError
-from assets.models import Asset, AssetComponent
+from assets.models import Asset, AssetComponent, Prototype
 
 
 class Site(models.Model):
@@ -84,9 +84,28 @@ class Project(models.Model):
 
 
 class Snapshot(models.Model):
+    """
+    A project's state at a point in time.
+
+    The prototype is recorded per snapshot rather than per project, because a
+    project moves between standards: design freezes against one version, then a
+    change order adopts the next. Each snapshot is therefore judged against the
+    standard it actually claimed to implement, and earlier phases stay correct
+    when a later one re-baselines.
+    """
     project = models.ForeignKey(Project, related_name='snapshots', on_delete=models.CASCADE)
     name = models.CharField(max_length=200)
     date = models.DateField()
+
+    prototype = models.ForeignKey(
+        Prototype,
+        on_delete=models.PROTECT,
+        related_name='snapshots',
+        null=True,
+        blank=True,
+        help_text="The standard this snapshot was built to. Leave empty for "
+                  "snapshots that are not measured against one.",
+    )
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

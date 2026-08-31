@@ -45,12 +45,19 @@ Four first-party apps, plus examples that are not part of the framework:
 ```
 Asset  (catalog definition, e.g. "42U Server Rack", type_id RK-4200)
   └── AssetComponent      assemblies: a rack ships with 2 PDUs and a fan tray
-        │
+
+Prototype (a versioned standard, e.g. RTL-STD 2025.1 — what SHOULD be there)
+  └── PrototypeItem       this asset, this many
+
 Project (one site's fit-out)
-  └── Snapshot            a point in time: design intent, procurement, as-built
+  └── Snapshot            a point in time, declaring the Prototype it was built to
         └── AssetInstance one physical occurrence of a catalog Asset
               └── AssetComponentInstance   optional components actually included
 ```
+
+Three things get confused with each other, so keep them apart. `Asset` is what
+a thing is. `PrototypeItem` is what should be installed. `AssetInstance` is what
+is installed. Drift is the gap between the last two.
 
 `assets/summary.py` aggregates across that spine: `GET /api/assets/{id}/summary/`
 reports where one catalog asset is installed across the whole portfolio, with
@@ -101,6 +108,14 @@ newest per project and states that in `totals.basis`. `assets/test_summary.py`
 pins it - that test is the only thing standing between this endpoint and a
 plausible lie.
 
+**A Prototype version is immutable once a snapshot references it.**
+`PrototypeItem.clean()` refuses the edit. Changing a referenced version rewrites
+history — a site that passed inspection becomes non-compliant because someone
+edited a spec. Publish a new version instead; that is what the version field is
+for. `Snapshot.prototype` is deliberately per-snapshot rather than per-project,
+so a project can change standard between phases and its earlier phases stay
+judged against what they actually claimed.
+
 **Meta option changes need a migration.** `makemigrations` produces an
 `AlterModelOptions` with no schema change, but Django will complain about
 missing migrations without it.
@@ -132,6 +147,8 @@ python manage.py test                    # full suite
 python manage.py check                   # config sanity
 python manage.py check --deploy          # pre-release checks, incl. access.W001
 python manage.py seed_demo --flush       # reload demo data
+python manage.py clear_demo --dry-run    # preview removing it
+python manage.py clear_demo              # remove it, keeping your own records
 python manage.py create_apikey "Name"    # mint an API key
 ```
 
@@ -143,6 +160,10 @@ python manage.py create_apikey "Name"    # mint an API key
   test runner would try to collect them.
 - List endpoints are paginated: `{count, next, previous, results}`. Detail
   endpoints return a bare object.
+- The demo dataset lives in `projects/demo_data.py`, shared by `seed_demo` and
+  `clear_demo`. Its teardown reference-counts shared lookups because
+  `Asset.manufacturer` is CASCADE — deleting a demo manufacturer someone reused
+  would take their assets with it. `projects/test_demo_data.py` pins that.
 - Secrets come from the environment via `.env`. Never commit a real key, and
   never put one in a `VITE_*` variable in the frontend repo — those are inlined
   into the browser bundle.

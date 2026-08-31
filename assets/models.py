@@ -461,3 +461,105 @@ class VendorProduct(models.Model):
 
     def __str__(self):
         return f"{self.vendor.name} - {self.asset.name} (${self.cost})"
+
+class Prototype(models.Model):
+    """
+    A versioned standard kit of parts.
+
+    "Every Tier 2 retail store gets 14 shelving units, 6 displays, and 40
+    downlights." The catalog says what a thing is and AssetInstance says what
+    was installed; this says what *should* be installed.
+
+    A row is one version. RTL-STD 2024.1 and RTL-STD 2025.1 are separate
+    records with separate item lists, and a Snapshot points at whichever one it
+    was built to. That is what keeps a store signed off in 2024 compliant after
+    the standard moves on, instead of turning the whole portfolio red the day
+    someone revises a spec.
+
+    Versions are immutable once referenced - see PrototypeItem.clean().
+    """
+    code = models.CharField(
+        max_length=50,
+        help_text="Identifies the standard across its versions, e.g. 'RTL-STD'.",
+    )
+    version = models.CharField(
+        max_length=20,
+        help_text="Revision of that standard, e.g. '2024.1'.",
+    )
+    name = models.CharField(max_length=200)
+    description = models.TextField(blank=True)
+    is_active = models.BooleanField(
+        default=True,
+        help_text="Clear this on a superseded version to keep it out of pickers. "
+                  "It stays valid for the snapshots already built to it.",
+    )
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        unique_together = ["code", "version"]
+        # Ends in a unique field so pagination cannot repeat or drop rows.
+        ordering = ["code", "version", "id"]
+
+    @property
+    def is_locked(self) -> bool:
+        """True once a snapshot references this version, freezing its items."""
+        return self.snapshots.exists()
+
+    def __str__(self):
+        return f"{self.code} {self.version} - {self.name}"
+
+
+class PrototypeItem(models.Model):
+    """
+    One line of a standard: this asset, this many.
+
+    Same shape as AssetComponent one level up - that says a rack contains two
+    PDUs, this says a store contains fourteen shelving units.
+    """
+    prototype = models.ForeignKey(
+        Prototype, on_delete=models.CASCADE, related_name="items"
+    )
+    asset = models.ForeignKey(
+        Asset, on_delete=models.PROTECT, related_name="prototype_items"
+    )
+    quantity = models.PositiveIntegerField(
+        default=1, help_text="How many this standard calls for."
+    )
+    is_required = models.BooleanField(
+        default=True,
+        help_text="Clear for parts that are site-dependent rather than standard. "
+                  "Absence of an optional item is not drift.",
+    )
+    notes = models.TextField(blank=True)
+
+    class Meta:
+        unique_together = ["prototype", "asset"]
+        verbose_name = "Prototype Item"
+        verbose_name_plural = "Prototype Items"
+        ordering = ["prototype", "asset", "id"]
+
+    def clean(self):
+        """
+        Refuse to change a version that snapshots have already been built to.
+
+        Editing a referenced version rewrites history: a store that passed
+        inspection last year silently becomes non-compliant because someone
+        added a line to the spec. Publish a new version instead - that is what
+        the version field is for.
+        """
+        super().clean()
+        if self.prototype_id and self.prototype.is_locked:
+            raise ValidationError(
+                f"{self.prototype} is referenced by "
+                f"{self.prototype.snapshots.count()} snapshot(s) and cannot be "
+                f"changed. Create a new version of '{self.prototype.code}' instead."
+            )
+
+    def save(self, *args, **kwargs):
+        self.full_clean()
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return f"{self.prototype.code} {self.prototype.version}: {self.asset.name} x{self.quantity}"

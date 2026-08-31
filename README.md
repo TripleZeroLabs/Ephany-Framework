@@ -102,8 +102,17 @@ drift this exists to surface is actually visible:
 python manage.py seed_demo
 ```
 
-Reload it at any time with `python manage.py seed_demo --flush`. That removes
-only what the command created and leaves records you made yourself alone.
+Reload it at any time with `python manage.py seed_demo --flush`, or remove it
+once you are done exploring:
+
+```
+python manage.py clear_demo --dry-run
+python manage.py clear_demo
+```
+
+Both keep anything you created, including shared records your own data depends
+on — a manufacturer you reused, a site your project sits on, a standard your
+snapshot is measured against. Whatever is kept is reported with the reason.
 
 ### 7. Create Superuser (Admin Access)
 
