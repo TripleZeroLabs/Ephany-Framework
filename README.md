@@ -278,6 +278,10 @@ For worked examples — including importing a whole fleet of projects from an ex
 The [`examples/`](examples/) folder holds complete, runnable integrations that
 exist to be read and copied. Nothing in the core apps depends on them.
 
+`examples/api_scripts/` is the quickest way in: four short Python files that
+list, search, and filter assets from outside Django, covering pagination and
+credentials. Run `check_connection.py` first.
+
 `examples/smartsheet_sync/` imports a fleet of projects and their asset
 snapshots from Smartsheet. Smartsheet is incidental — the code is split so that
 one small module knows the external API and everything else is mapping and
@@ -292,6 +296,15 @@ design decisions worth copying.
 ```
 python manage.py sync_projects_from_smartsheet <API_KEY> --dry-run
 ```
+
+---
+
+## Documentation
+
+* [BIM Integration and Units](docs/bim-integration.md) — how `AssetAttribute`
+  carries Autodesk ForgeTypeId schemas, and how values convert between a user's
+  preferred units and the base-metric values stored in the database.
+* `/api/docs/` — the full endpoint reference, generated from the code.
 
 ---
 

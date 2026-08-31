@@ -25,6 +25,3 @@ env/
 
 # Environment Variables (CRITICAL for Open Source)
 .env
-
-# Project-specific
-support/

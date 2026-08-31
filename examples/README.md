@@ -6,11 +6,17 @@ directory and the framework still runs.
 
 | Example | What it demonstrates |
 | --- | --- |
+| [`api_scripts/`](api_scripts/) | Talking to the API from a standalone Python script: pagination, filtering, credentials |
 | [`smartsheet_sync/`](smartsheet_sync/) | Importing a fleet of projects and their asset snapshots from an external system of record |
 
-## Why these ship enabled
+Start with `api_scripts/` if you are new here — `check_connection.py` is the
+shortest path to knowing your setup works.
 
-Each example is a Django app listed in `INSTALLED_APPS`. That is the only way
+## Why one of these ships enabled
+
+`api_scripts/` is just files — run them directly, nothing to install.
+
+`smartsheet_sync/` is a Django app listed in `INSTALLED_APPS`. That is the only way
 its management commands show up in `python manage.py help`, which is where
 people actually discover them. They add no models, no migrations, and no
 routes — an example app costs you a line of config and nothing at runtime.
