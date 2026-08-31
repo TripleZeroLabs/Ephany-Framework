@@ -15,6 +15,8 @@ from .models import (
     AssetAttributeChoice,
     AssetCategory,
     AssetFile,
+    Prototype,
+    PrototypeItem,
     Vendor,
     VendorProduct
 )
@@ -26,6 +28,8 @@ from .serializers import (
     AssetAttributeSerializer,
     AssetAttributeChoiceSerializer,
     CategoryListSerializer,
+    PrototypeSerializer,
+    PrototypeItemSerializer,
     VendorSerializer,
     VendorProductSerializer,
 )
@@ -237,3 +241,38 @@ class VendorProductViewSet(viewsets.ModelViewSet):
     filterset_fields = ['vendor', 'asset']
     search_fields = ['asset__name', 'vendor__name', 'sku']
     ordering_fields = ['vendor__name', 'asset__name', 'cost']
+
+class PrototypeViewSet(viewsets.ModelViewSet):
+    """
+    Versioned standard kits of parts.
+
+    A row is one version. RTL-STD 2024.1 and RTL-STD 2025.1 are separate
+    records with separate item lists, and a Snapshot points at whichever it was
+    built to. Filter by `code` to see every revision of one standard, or by
+    `is_active` to hide superseded ones.
+    """
+    queryset = Prototype.objects.prefetch_related("items__asset")
+    serializer_class = PrototypeSerializer
+    filter_backends = [DjangoFilterBackend, SearchFilter, StableOrderingFilter]
+    filterset_fields = {
+        "code": ["exact", "iexact"],
+        "version": ["exact"],
+        "is_active": ["exact"],
+    }
+    search_fields = ["code", "name", "description"]
+    ordering_fields = ["code", "version", "name", "created_at"]
+
+
+class PrototypeItemViewSet(viewsets.ModelViewSet):
+    """
+    Individual lines of a standard.
+
+    Writes are refused once a snapshot references the parent version - see
+    PrototypeItem.clean(). Editing a referenced standard rewrites history, so
+    publish a new version instead.
+    """
+    queryset = PrototypeItem.objects.select_related("prototype", "asset")
+    serializer_class = PrototypeItemSerializer
+    filter_backends = [DjangoFilterBackend, StableOrderingFilter]
+    filterset_fields = ["prototype", "asset"]
+    ordering_fields = ["quantity"]

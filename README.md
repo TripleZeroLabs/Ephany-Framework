@@ -18,6 +18,7 @@ API designed to be consumed by modern frontend applications (desktop, web, mobil
 *   **API First:** Fully decoupled architecture using Django REST Framework.
 *   **Self-Describing:** A complete OpenAPI 3 schema is served at `/api/schema/` and committed to the repo as `openapi.yaml`, so clients, SDKs, and coding agents can discover the API without reading the source.
 *   **Worked Examples:** The [`examples/`](examples/) folder ships readable, runnable integrations you can copy and point at your own systems.
+*   **Versioned Standards:** Define what a site *should* contain, and see how each one actually differs - without a spec revision making every existing site look broken.
 *   **Portfolio Summaries:** `GET /api/assets/{id}/summary/` answers "a manufacturer discontinued this part - how many are in the field, where, and what does replacing them cost?" in one request.
 
 ## Tech Stack
@@ -164,6 +165,39 @@ curl http://127.0.0.1:8000/api/assets/40/summary/
 
 One request, three queries. Run `python manage.py seed_demo` and the numbers
 above are what you get.
+
+### And the one it was built for
+
+A `Prototype` is a versioned standard - "every Tier 2 store gets 14 shelving
+units and 9 displays." A `Snapshot` records which version it was built to, so
+drift is the gap between the two:
+
+```
+curl http://127.0.0.1:8000/api/snapshots/45/drift/
+```
+
+```json
+{
+  "prototype": { "code": "RTL-STD", "version": "2025.1" },
+  "summary": { "is_compliant": false, "short": 1, "over": 0, "unexpected": 0 },
+  "lines": [
+    { "type_id": "DSP-055", "expected": 9,  "actual": 9,  "delta": 0,   "status": "match" },
+    { "type_id": "LGT-100", "expected": 40, "actual": 25, "delta": -15, "status": "short" }
+  ]
+}
+```
+
+That store carries nine displays where older stores carry six, and it is not in
+drift - it was built to a newer revision of the standard. Each snapshot is
+measured against the version it declares, so revising a standard does not turn
+every existing site red. Its only real problem is the fifteen missing
+downlights.
+
+Stamp a standard into a new site with one call:
+
+```
+curl -X POST http://127.0.0.1:8000/api/projects/12/instantiate/   -H "Content-Type: application/json"   -d '{"prototype": 4, "name": "Phase 1: Design Intent", "date": "2026-03-04"}'
+```
 
 Note `totals.basis`. Each project holds several snapshots of the same physical
 installation - design intent, procurement, as-built - so a naive count would

@@ -59,6 +59,14 @@ Three things get confused with each other, so keep them apart. `Asset` is what
 a thing is. `PrototypeItem` is what should be installed. `AssetInstance` is what
 is installed. Drift is the gap between the last two.
 
+Three endpoints work across that spine:
+
+| Route | Answers |
+| --- | --- |
+| `GET /api/assets/{id}/summary/` | Where is this asset installed portfolio-wide, and what would replacing it cost? |
+| `GET /api/snapshots/{id}/drift/` | How does this site differ from the standard it was built to? |
+| `POST /api/projects/{id}/instantiate/` | Create a snapshot stamped from a standard. |
+
 `assets/summary.py` aggregates across that spine: `GET /api/assets/{id}/summary/`
 reports where one catalog asset is installed across the whole portfolio, with
 replacement cost.
@@ -115,6 +123,12 @@ edited a spec. Publish a new version instead; that is what the version field is
 for. `Snapshot.prototype` is deliberately per-snapshot rather than per-project,
 so a project can change standard between phases and its earlier phases stay
 judged against what they actually claimed.
+
+**Drift compares a snapshot against its own prototype**, never against the
+newest revision of that standard. Measuring everything against the latest
+revision turns the whole portfolio red the day someone publishes one, and a
+report that is always red is one nobody opens. `projects/drift.py` holds the
+comparison; `projects/test_drift.py` pins the rule.
 
 **Meta option changes need a migration.** `makemigrations` produces an
 `AlterModelOptions` with no schema change, but Django will complain about

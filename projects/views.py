@@ -1,9 +1,19 @@
-from rest_framework import viewsets
+from drf_spectacular.utils import extend_schema
+from rest_framework import status, viewsets
+from rest_framework.decorators import action
 from rest_framework.filters import SearchFilter
+from rest_framework.response import Response
 from ephany_framework.filters import StableOrderingFilter
 from django_filters.rest_framework import DjangoFilterBackend
 from django.db.models import Max
 
+from .drift import (
+    InstantiateRequestSerializer,
+    InstantiateResponseSerializer,
+    SnapshotDriftSerializer,
+    instantiate_prototype,
+    snapshot_drift,
+)
 from .models import Project, Site, Snapshot, AssetInstance
 from .serializers import ProjectSerializer, SiteSerializer, SnapshotSerializer, AssetInstanceSerializer
 
@@ -35,6 +45,62 @@ class ProjectViewSet(viewsets.ModelViewSet):
     filterset_fields = ['status', 'site']
     search_fields = ['job_id', 'name', 'site__site_id', 'city']
 
+    @extend_schema(
+        summary="Create a snapshot populated from a standard",
+        description=(
+            """Stamps a prototype's parts list into a new snapshot on this project.
+
+Turns "set up the sixteenth store like the other fifteen" into one call. It is
+also how a project adopts a revised standard - the operation is identical, so
+there is no separate re-baselining path.
+
+Quantities expand into individual AssetInstance rows, matching how installations
+are modelled everywhere else: each unit can then carry its own location, tag,
+and custom fields."""
+        ),
+        request=InstantiateRequestSerializer,
+        responses={201: InstantiateResponseSerializer},
+    )
+    @action(detail=True, methods=["post"])
+    def instantiate(self, request, pk=None):
+        """Create a snapshot on this project from a prototype."""
+        project = self.get_object()
+        form = InstantiateRequestSerializer(data=request.data)
+        form.is_valid(raise_exception=True)
+        data = form.validated_data
+
+        snapshot, created = instantiate_prototype(
+            project=project,
+            prototype=data["prototype"],
+            name=data["name"],
+            date=data["date"],
+            include_optional=data["include_optional"],
+        )
+
+        payload = {
+            "snapshot": {
+                "id": snapshot.id,
+                "name": snapshot.name,
+                "date": snapshot.date,
+                "project": {
+                    "id": project.id,
+                    "job_id": project.job_id,
+                    "name": project.name,
+                },
+            },
+            "prototype": {
+                "id": snapshot.prototype.id,
+                "code": snapshot.prototype.code,
+                "version": snapshot.prototype.version,
+                "name": snapshot.prototype.name,
+            },
+            "instances_created": created,
+        }
+        return Response(
+            InstantiateResponseSerializer(payload).data,
+            status=status.HTTP_201_CREATED,
+        )
+
     ordering_fields = [
         'job_id',
         'name',
@@ -52,10 +118,43 @@ class SnapshotViewSet(viewsets.ModelViewSet):
 
     Uses select_related to join the project data in a single query.
     """
-    queryset = Snapshot.objects.select_related('project').all()
+    queryset = Snapshot.objects.select_related('project', 'prototype').all()
     serializer_class = SnapshotSerializer
     filter_backends = [DjangoFilterBackend, StableOrderingFilter]
-    filterset_fields = ['project']
+    filterset_fields = ['project', 'prototype']
+
+    @extend_schema(
+        summary="How this snapshot differs from the standard it was built to",
+        description=(
+            """Compares what is installed against the snapshot's own prototype.
+
+Each snapshot is measured against the standard **it declares**, never against
+the project's current one or the newest revision of that standard. A site
+signed off against the 2024 spec stays compliant after the spec moves on;
+measuring everything against the latest revision would turn the whole portfolio
+red the day someone publishes one.
+
+`status` distinguishes four cases rather than reducing to a number: `match`,
+`short`, `over`, and `unexpected` (installed but absent from the standard).
+`is_required` is reported per line because an optional item being absent is a
+choice, not a fault - `summary.is_compliant` ignores those.
+
+Returns 409 when the snapshot declares no prototype. There is no baseline to
+measure against, which is a different answer from "no differences"."""
+        ),
+        responses={200: SnapshotDriftSerializer},
+    )
+    @action(detail=True, methods=["get"])
+    def drift(self, request, pk=None):
+        """Expected versus actual, against this snapshot's own standard."""
+        result = snapshot_drift(self.get_object())
+        if result is None:
+            return Response(
+                {"detail": "This snapshot declares no prototype, so there is "
+                           "nothing to measure it against."},
+                status=status.HTTP_409_CONFLICT,
+            )
+        return Response(SnapshotDriftSerializer(result).data, status=status.HTTP_200_OK)
 
 
 class AssetInstanceViewSet(viewsets.ModelViewSet):

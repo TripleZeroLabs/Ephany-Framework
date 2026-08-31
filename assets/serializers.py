@@ -1,5 +1,6 @@
 import json
 from typing import Any, Dict
+from drf_spectacular.utils import extend_schema_field
 from rest_framework import serializers
 from .models import (
     Manufacturer,
@@ -9,6 +10,8 @@ from .models import (
     AssetAttributeChoice,
     AssetCategory,
     AssetComponent,
+    Prototype,
+    PrototypeItem,
     Vendor,
     VendorProduct,
 )
@@ -491,3 +494,71 @@ class AssetSerializer(serializers.ModelSerializer):
                 mutable_data['custom_fields'] = new_custom_fields
 
         return super().to_internal_value(mutable_data)
+
+class PrototypeItemSerializer(serializers.ModelSerializer):
+    """One line of a standard: this asset, this many."""
+    asset_id = serializers.PrimaryKeyRelatedField(
+        queryset=Asset.objects.all(), source="asset", write_only=True
+    )
+    type_id = serializers.CharField(source="asset.type_id", read_only=True)
+    asset_name = serializers.CharField(source="asset.name", read_only=True)
+
+    class Meta:
+        model = PrototypeItem
+        fields = [
+            "id", "prototype", "asset", "asset_id", "type_id", "asset_name",
+            "quantity", "is_required", "notes",
+        ]
+        read_only_fields = ["asset"]
+
+    def validate(self, attrs):
+        """
+        Surface the model's immutability rule as a 400 rather than a 500.
+
+        PrototypeItem.save() calls full_clean(), which raises Django's
+        ValidationError. DRF does not translate that, so without this the API
+        would answer a perfectly understandable refusal with a server error.
+        """
+        from django.core.exceptions import ValidationError as DjangoValidationError
+
+        candidate = PrototypeItem(
+            **{**{f: getattr(self.instance, f, None) for f in ("prototype", "asset")}, **attrs}
+        )
+        if self.instance:
+            candidate.pk = self.instance.pk
+        try:
+            candidate.clean()
+        except DjangoValidationError as error:
+            raise serializers.ValidationError(error.messages)
+        return attrs
+
+
+class PrototypeSerializer(serializers.ModelSerializer):
+    """
+    A versioned standard kit of parts.
+
+    `code` identifies the standard, `version` the revision. Two rows sharing a
+    code are two revisions of one standard, not duplicates.
+    """
+    items = PrototypeItemSerializer(many=True, read_only=True)
+    item_count = serializers.IntegerField(source="items.count", read_only=True)
+    total_units = serializers.SerializerMethodField()
+    is_locked = serializers.BooleanField(
+        read_only=True,
+        help_text="True once a snapshot references this version, which freezes "
+                  "its items. Publish a new version instead of editing it.",
+    )
+    snapshot_count = serializers.IntegerField(source="snapshots.count", read_only=True)
+
+    class Meta:
+        model = Prototype
+        fields = [
+            "id", "code", "version", "name", "description", "is_active",
+            "items", "item_count", "total_units", "is_locked", "snapshot_count",
+            "created_at", "updated_at",
+        ]
+
+    @extend_schema_field(serializers.IntegerField)
+    def get_total_units(self, obj):
+        """How many physical units this standard calls for in total."""
+        return sum(item.quantity for item in obj.items.all())

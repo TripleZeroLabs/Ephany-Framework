@@ -22,6 +22,8 @@ from assets.views import (
     ManufacturerViewSet,
     AssetAttributeViewSet,
     AssetAttributeChoiceViewSet,
+    PrototypeViewSet,
+    PrototypeItemViewSet,
     VendorViewSet,
     VendorProductViewSet,
 )
@@ -47,6 +49,8 @@ router.register(r'attribute-choices', AssetAttributeChoiceViewSet)  # New
 router.register(r'files', AssetFileViewSet)
 router.register(r'vendors', VendorViewSet)
 router.register(r'vendor-products', VendorProductViewSet)
+router.register(r'prototypes', PrototypeViewSet)
+router.register(r'prototype-items', PrototypeItemViewSet)
 
 # Projects
 router.register(r'sites', SiteViewSet)

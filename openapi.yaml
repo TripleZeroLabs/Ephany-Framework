@@ -1850,6 +1850,500 @@ paths:
       responses:
         '204':
           description: No response body
+  /api/projects/{id}/instantiate/:
+    post:
+      operationId: projects_instantiate_create
+      description: |-
+        Stamps a prototype's parts list into a new snapshot on this project.
+
+        Turns "set up the sixteenth store like the other fifteen" into one call. It is
+        also how a project adopts a revised standard - the operation is identical, so
+        there is no separate re-baselining path.
+
+        Quantities expand into individual AssetInstance rows, matching how installations
+        are modelled everywhere else: each unit can then carry its own location, tag,
+        and custom fields.
+      summary: Create a snapshot populated from a standard
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this project.
+        required: true
+      tags:
+      - projects
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InstantiateRequestRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/InstantiateRequestRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/InstantiateRequestRequest'
+        required: true
+      security:
+      - tokenAuth: []
+      - ApiKeyAuth: []
+      - cookieAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InstantiateResponse'
+          description: ''
+  /api/prototype-items/:
+    get:
+      operationId: prototype_items_list
+      description: |-
+        Individual lines of a standard.
+
+        Writes are refused once a snapshot references the parent version - see
+        PrototypeItem.clean(). Editing a referenced standard rewrites history, so
+        publish a new version instead.
+      parameters:
+      - in: query
+        name: asset
+        schema:
+          type: integer
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      - in: query
+        name: prototype
+        schema:
+          type: integer
+      tags:
+      - prototype-items
+      security:
+      - tokenAuth: []
+      - ApiKeyAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedPrototypeItemList'
+          description: ''
+    post:
+      operationId: prototype_items_create
+      description: |-
+        Individual lines of a standard.
+
+        Writes are refused once a snapshot references the parent version - see
+        PrototypeItem.clean(). Editing a referenced standard rewrites history, so
+        publish a new version instead.
+      tags:
+      - prototype-items
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PrototypeItemRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PrototypeItemRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PrototypeItemRequest'
+        required: true
+      security:
+      - tokenAuth: []
+      - ApiKeyAuth: []
+      - cookieAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PrototypeItem'
+          description: ''
+  /api/prototype-items/{id}/:
+    get:
+      operationId: prototype_items_retrieve
+      description: |-
+        Individual lines of a standard.
+
+        Writes are refused once a snapshot references the parent version - see
+        PrototypeItem.clean(). Editing a referenced standard rewrites history, so
+        publish a new version instead.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Prototype Item.
+        required: true
+      tags:
+      - prototype-items
+      security:
+      - tokenAuth: []
+      - ApiKeyAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PrototypeItem'
+          description: ''
+    put:
+      operationId: prototype_items_update
+      description: |-
+        Individual lines of a standard.
+
+        Writes are refused once a snapshot references the parent version - see
+        PrototypeItem.clean(). Editing a referenced standard rewrites history, so
+        publish a new version instead.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Prototype Item.
+        required: true
+      tags:
+      - prototype-items
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PrototypeItemRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PrototypeItemRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PrototypeItemRequest'
+        required: true
+      security:
+      - tokenAuth: []
+      - ApiKeyAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PrototypeItem'
+          description: ''
+    patch:
+      operationId: prototype_items_partial_update
+      description: |-
+        Individual lines of a standard.
+
+        Writes are refused once a snapshot references the parent version - see
+        PrototypeItem.clean(). Editing a referenced standard rewrites history, so
+        publish a new version instead.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Prototype Item.
+        required: true
+      tags:
+      - prototype-items
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedPrototypeItemRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedPrototypeItemRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedPrototypeItemRequest'
+      security:
+      - tokenAuth: []
+      - ApiKeyAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PrototypeItem'
+          description: ''
+    delete:
+      operationId: prototype_items_destroy
+      description: |-
+        Individual lines of a standard.
+
+        Writes are refused once a snapshot references the parent version - see
+        PrototypeItem.clean(). Editing a referenced standard rewrites history, so
+        publish a new version instead.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Prototype Item.
+        required: true
+      tags:
+      - prototype-items
+      security:
+      - tokenAuth: []
+      - ApiKeyAuth: []
+      - cookieAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/prototypes/:
+    get:
+      operationId: prototypes_list
+      description: |-
+        Versioned standard kits of parts.
+
+        A row is one version. RTL-STD 2024.1 and RTL-STD 2025.1 are separate
+        records with separate item lists, and a Snapshot points at whichever it was
+        built to. Filter by `code` to see every revision of one standard, or by
+        `is_active` to hide superseded ones.
+      parameters:
+      - in: query
+        name: code
+        schema:
+          type: string
+      - in: query
+        name: code__iexact
+        schema:
+          type: string
+      - in: query
+        name: is_active
+        schema:
+          type: boolean
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      - in: query
+        name: version
+        schema:
+          type: string
+      tags:
+      - prototypes
+      security:
+      - tokenAuth: []
+      - ApiKeyAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedPrototypeList'
+          description: ''
+    post:
+      operationId: prototypes_create
+      description: |-
+        Versioned standard kits of parts.
+
+        A row is one version. RTL-STD 2024.1 and RTL-STD 2025.1 are separate
+        records with separate item lists, and a Snapshot points at whichever it was
+        built to. Filter by `code` to see every revision of one standard, or by
+        `is_active` to hide superseded ones.
+      tags:
+      - prototypes
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PrototypeRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PrototypeRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PrototypeRequest'
+        required: true
+      security:
+      - tokenAuth: []
+      - ApiKeyAuth: []
+      - cookieAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Prototype'
+          description: ''
+  /api/prototypes/{id}/:
+    get:
+      operationId: prototypes_retrieve
+      description: |-
+        Versioned standard kits of parts.
+
+        A row is one version. RTL-STD 2024.1 and RTL-STD 2025.1 are separate
+        records with separate item lists, and a Snapshot points at whichever it was
+        built to. Filter by `code` to see every revision of one standard, or by
+        `is_active` to hide superseded ones.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this prototype.
+        required: true
+      tags:
+      - prototypes
+      security:
+      - tokenAuth: []
+      - ApiKeyAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Prototype'
+          description: ''
+    put:
+      operationId: prototypes_update
+      description: |-
+        Versioned standard kits of parts.
+
+        A row is one version. RTL-STD 2024.1 and RTL-STD 2025.1 are separate
+        records with separate item lists, and a Snapshot points at whichever it was
+        built to. Filter by `code` to see every revision of one standard, or by
+        `is_active` to hide superseded ones.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this prototype.
+        required: true
+      tags:
+      - prototypes
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PrototypeRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PrototypeRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PrototypeRequest'
+        required: true
+      security:
+      - tokenAuth: []
+      - ApiKeyAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Prototype'
+          description: ''
+    patch:
+      operationId: prototypes_partial_update
+      description: |-
+        Versioned standard kits of parts.
+
+        A row is one version. RTL-STD 2024.1 and RTL-STD 2025.1 are separate
+        records with separate item lists, and a Snapshot points at whichever it was
+        built to. Filter by `code` to see every revision of one standard, or by
+        `is_active` to hide superseded ones.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this prototype.
+        required: true
+      tags:
+      - prototypes
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedPrototypeRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedPrototypeRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedPrototypeRequest'
+      security:
+      - tokenAuth: []
+      - ApiKeyAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Prototype'
+          description: ''
+    delete:
+      operationId: prototypes_destroy
+      description: |-
+        Versioned standard kits of parts.
+
+        A row is one version. RTL-STD 2024.1 and RTL-STD 2025.1 are separate
+        records with separate item lists, and a Snapshot points at whichever it was
+        built to. Filter by `code` to see every revision of one standard, or by
+        `is_active` to hide superseded ones.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this prototype.
+        required: true
+      tags:
+      - prototypes
+      security:
+      - tokenAuth: []
+      - ApiKeyAuth: []
+      - cookieAuth: []
+      responses:
+        '204':
+          description: No response body
   /api/sites/:
     get:
       operationId: sites_list
@@ -2062,6 +2556,10 @@ paths:
         name: project
         schema:
           type: integer
+      - in: query
+        name: prototype
+        schema:
+          type: integer
       tags:
       - snapshots
       security:
@@ -2230,6 +2728,46 @@ paths:
       responses:
         '204':
           description: No response body
+  /api/snapshots/{id}/drift/:
+    get:
+      operationId: snapshots_drift_retrieve
+      description: |-
+        Compares what is installed against the snapshot's own prototype.
+
+        Each snapshot is measured against the standard **it declares**, never against
+        the project's current one or the newest revision of that standard. A site
+        signed off against the 2024 spec stays compliant after the spec moves on;
+        measuring everything against the latest revision would turn the whole portfolio
+        red the day someone publishes one.
+
+        `status` distinguishes four cases rather than reducing to a number: `match`,
+        `short`, `over`, and `unexpected` (installed but absent from the standard).
+        `is_required` is reported per line because an optional item being absent is a
+        choice, not a fault - `summary.is_compliant` ignores those.
+
+        Returns 409 when the snapshot declares no prototype. There is no baseline to
+        measure against, which is a different answer from "no differences".
+      summary: How this snapshot differs from the standard it was built to
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this snapshot.
+        required: true
+      tags:
+      - snapshots
+      security:
+      - tokenAuth: []
+      - ApiKeyAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SnapshotDrift'
+          description: ''
   /api/users/:
     get:
       operationId: users_list
@@ -3419,6 +3957,163 @@ components:
         * `bool` - Yes / No
         * `choice` - Picklist (Single)
         * `multi_choice` - Picklist (Multiple)
+    DriftLine:
+      type: object
+      properties:
+        type_id:
+          type: string
+        name:
+          type: string
+          nullable: true
+        expected:
+          type: integer
+        actual:
+          type: integer
+        delta:
+          type: integer
+          description: actual minus expected; negative means short.
+        status:
+          $ref: '#/components/schemas/DriftLineStatusEnum'
+        is_required:
+          type: boolean
+          description: An optional item being absent is a choice, not a fault.
+      required:
+      - actual
+      - delta
+      - expected
+      - is_required
+      - name
+      - status
+      - type_id
+    DriftLineStatusEnum:
+      enum:
+      - match
+      - short
+      - over
+      - unexpected
+      type: string
+      description: |-
+        * `match` - match
+        * `short` - short
+        * `over` - over
+        * `unexpected` - unexpected
+    DriftProject:
+      type: object
+      properties:
+        id:
+          type: integer
+        job_id:
+          type: string
+        name:
+          type: string
+      required:
+      - id
+      - job_id
+      - name
+    DriftPrototype:
+      type: object
+      properties:
+        id:
+          type: integer
+        code:
+          type: string
+        version:
+          type: string
+        name:
+          type: string
+      required:
+      - code
+      - id
+      - name
+      - version
+    DriftSnapshot:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        date:
+          type: string
+          format: date
+        project:
+          $ref: '#/components/schemas/DriftProject'
+      required:
+      - date
+      - id
+      - name
+      - project
+    DriftSummary:
+      type: object
+      properties:
+        is_compliant:
+          type: boolean
+          description: True when nothing required is missing and nothing unexpected
+            is present.
+        lines_checked:
+          type: integer
+        lines_matching:
+          type: integer
+        short:
+          type: integer
+          description: Assets with fewer installed than specified.
+        over:
+          type: integer
+          description: Assets with more installed than specified.
+        unexpected:
+          type: integer
+          description: Assets installed but not in the standard.
+        units_expected:
+          type: integer
+        units_actual:
+          type: integer
+      required:
+      - is_compliant
+      - lines_checked
+      - lines_matching
+      - over
+      - short
+      - unexpected
+      - units_actual
+      - units_expected
+    InstantiateRequestRequest:
+      type: object
+      description: Body for POST /api/projects/{id}/instantiate/.
+      properties:
+        prototype:
+          type: integer
+          description: The standard to stamp into the new snapshot.
+        name:
+          type: string
+          minLength: 1
+          description: 'Name for the new snapshot, e.g. ''Phase 1: Design Intent''.'
+          maxLength: 200
+        date:
+          type: string
+          format: date
+          description: Date the snapshot represents.
+        include_optional:
+          type: boolean
+          default: true
+          description: Include items the standard marks optional. Turn off to stamp
+            only what is mandatory and add the rest per site.
+      required:
+      - date
+      - name
+      - prototype
+    InstantiateResponse:
+      type: object
+      properties:
+        snapshot:
+          $ref: '#/components/schemas/DriftSnapshot'
+        prototype:
+          $ref: '#/components/schemas/DriftPrototype'
+        instances_created:
+          type: integer
+      required:
+      - instances_created
+      - prototype
+      - snapshot
     LengthUnitEnum:
       enum:
       - mm
@@ -3777,6 +4472,52 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Project'
+    PaginatedPrototypeItemList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/PrototypeItem'
+    PaginatedPrototypeList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/Prototype'
     PaginatedSiteList:
       type: object
       required:
@@ -4153,9 +4894,58 @@ components:
           nullable: true
         status:
           oneOf:
-          - $ref: '#/components/schemas/StatusEnum'
+          - $ref: '#/components/schemas/ProjectStatusEnum'
           - $ref: '#/components/schemas/BlankEnum'
         custom_fields: {}
+    PatchedPrototypeItemRequest:
+      type: object
+      description: 'One line of a standard: this asset, this many.'
+      properties:
+        prototype:
+          type: integer
+        asset_id:
+          type: integer
+          writeOnly: true
+        quantity:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: 0
+          format: int64
+          description: How many this standard calls for.
+        is_required:
+          type: boolean
+          description: Clear for parts that are site-dependent rather than standard.
+            Absence of an optional item is not drift.
+        notes:
+          type: string
+    PatchedPrototypeRequest:
+      type: object
+      description: |-
+        A versioned standard kit of parts.
+
+        `code` identifies the standard, `version` the revision. Two rows sharing a
+        code are two revisions of one standard, not duplicates.
+      properties:
+        code:
+          type: string
+          minLength: 1
+          description: Identifies the standard across its versions, e.g. 'RTL-STD'.
+          maxLength: 50
+        version:
+          type: string
+          minLength: 1
+          description: Revision of that standard, e.g. '2024.1'.
+          maxLength: 20
+        name:
+          type: string
+          minLength: 1
+          maxLength: 200
+        description:
+          type: string
+        is_active:
+          type: boolean
+          description: Clear this on a superseded version to keep it out of pickers.
+            It stays valid for the snapshots already built to it.
     PatchedSiteRequest:
       type: object
       properties:
@@ -4181,6 +4971,11 @@ components:
         date:
           type: string
           format: date
+        prototype:
+          type: integer
+          nullable: true
+          description: The standard this snapshot was built to. Leave empty for snapshots
+            that are not measured against one.
     PatchedUserRequest:
       type: object
       properties:
@@ -4324,7 +5119,7 @@ components:
           nullable: true
         status:
           oneOf:
-          - $ref: '#/components/schemas/StatusEnum'
+          - $ref: '#/components/schemas/ProjectStatusEnum'
           - $ref: '#/components/schemas/BlankEnum'
         custom_fields: {}
         snapshot_count:
@@ -4412,7 +5207,7 @@ components:
           nullable: true
         status:
           oneOf:
-          - $ref: '#/components/schemas/StatusEnum'
+          - $ref: '#/components/schemas/ProjectStatusEnum'
           - $ref: '#/components/schemas/BlankEnum'
         custom_fields: {}
       required:
@@ -4449,6 +5244,177 @@ components:
       required:
       - date
       - name
+    ProjectStatusEnum:
+      enum:
+      - red
+      - yellow
+      - green
+      - blue
+      type: string
+      description: |-
+        * `red` - Red
+        * `yellow` - Yellow
+        * `green` - Green
+        * `blue` - Blue
+    Prototype:
+      type: object
+      description: |-
+        A versioned standard kit of parts.
+
+        `code` identifies the standard, `version` the revision. Two rows sharing a
+        code are two revisions of one standard, not duplicates.
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        code:
+          type: string
+          description: Identifies the standard across its versions, e.g. 'RTL-STD'.
+          maxLength: 50
+        version:
+          type: string
+          description: Revision of that standard, e.g. '2024.1'.
+          maxLength: 20
+        name:
+          type: string
+          maxLength: 200
+        description:
+          type: string
+        is_active:
+          type: boolean
+          description: Clear this on a superseded version to keep it out of pickers.
+            It stays valid for the snapshots already built to it.
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/PrototypeItem'
+          readOnly: true
+        item_count:
+          type: integer
+          readOnly: true
+        total_units:
+          type: integer
+          readOnly: true
+        is_locked:
+          type: boolean
+          readOnly: true
+          description: True once a snapshot references this version, which freezes
+            its items. Publish a new version instead of editing it.
+        snapshot_count:
+          type: integer
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - code
+      - created_at
+      - id
+      - is_locked
+      - item_count
+      - items
+      - name
+      - snapshot_count
+      - total_units
+      - updated_at
+      - version
+    PrototypeItem:
+      type: object
+      description: 'One line of a standard: this asset, this many.'
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        prototype:
+          type: integer
+        asset:
+          type: integer
+          readOnly: true
+        type_id:
+          type: string
+          readOnly: true
+        asset_name:
+          type: string
+          readOnly: true
+        quantity:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: 0
+          format: int64
+          description: How many this standard calls for.
+        is_required:
+          type: boolean
+          description: Clear for parts that are site-dependent rather than standard.
+            Absence of an optional item is not drift.
+        notes:
+          type: string
+      required:
+      - asset
+      - asset_name
+      - id
+      - prototype
+      - type_id
+    PrototypeItemRequest:
+      type: object
+      description: 'One line of a standard: this asset, this many.'
+      properties:
+        prototype:
+          type: integer
+        asset_id:
+          type: integer
+          writeOnly: true
+        quantity:
+          type: integer
+          maximum: 9223372036854775807
+          minimum: 0
+          format: int64
+          description: How many this standard calls for.
+        is_required:
+          type: boolean
+          description: Clear for parts that are site-dependent rather than standard.
+            Absence of an optional item is not drift.
+        notes:
+          type: string
+      required:
+      - asset_id
+      - prototype
+    PrototypeRequest:
+      type: object
+      description: |-
+        A versioned standard kit of parts.
+
+        `code` identifies the standard, `version` the revision. Two rows sharing a
+        code are two revisions of one standard, not duplicates.
+      properties:
+        code:
+          type: string
+          minLength: 1
+          description: Identifies the standard across its versions, e.g. 'RTL-STD'.
+          maxLength: 50
+        version:
+          type: string
+          minLength: 1
+          description: Revision of that standard, e.g. '2024.1'.
+          maxLength: 20
+        name:
+          type: string
+          minLength: 1
+          maxLength: 200
+        description:
+          type: string
+        is_active:
+          type: boolean
+          description: Clear this on a superseded version to keep it out of pickers.
+            It stays valid for the snapshots already built to it.
+      required:
+      - code
+      - name
+      - version
     ScopeEnum:
       enum:
       - type
@@ -4520,6 +5486,17 @@ components:
         instance_count:
           type: integer
           readOnly: true
+        prototype:
+          type: integer
+          nullable: true
+          description: The standard this snapshot was built to. Leave empty for snapshots
+            that are not measured against one.
+        prototype_code:
+          type: string
+          readOnly: true
+        prototype_version:
+          type: string
+          readOnly: true
         created_at:
           type: string
           format: date-time
@@ -4531,6 +5508,27 @@ components:
       - instance_count
       - name
       - project
+      - prototype_code
+      - prototype_version
+    SnapshotDrift:
+      type: object
+      description: How one snapshot differs from the standard it declares.
+      properties:
+        snapshot:
+          $ref: '#/components/schemas/DriftSnapshot'
+        prototype:
+          $ref: '#/components/schemas/DriftPrototype'
+        summary:
+          $ref: '#/components/schemas/DriftSummary'
+        lines:
+          type: array
+          items:
+            $ref: '#/components/schemas/DriftLine'
+      required:
+      - lines
+      - prototype
+      - snapshot
+      - summary
     SnapshotRequest:
       type: object
       description: |-
@@ -4546,22 +5544,15 @@ components:
         date:
           type: string
           format: date
+        prototype:
+          type: integer
+          nullable: true
+          description: The standard this snapshot was built to. Leave empty for snapshots
+            that are not measured against one.
       required:
       - date
       - name
       - project
-    StatusEnum:
-      enum:
-      - red
-      - yellow
-      - green
-      - blue
-      type: string
-      description: |-
-        * `red` - Red
-        * `yellow` - Yellow
-        * `green` - Green
-        * `blue` - Blue
     SummaryAsset:
       type: object
       properties:

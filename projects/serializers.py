@@ -235,10 +235,15 @@ class SnapshotSerializer(serializers.ModelSerializer):
     Includes an aggregated count of all asset instances within the snapshot.
     """
     instance_count = serializers.IntegerField(source='instances.count', read_only=True)
+    prototype_code = serializers.CharField(source='prototype.code', read_only=True)
+    prototype_version = serializers.CharField(source='prototype.version', read_only=True)
 
     class Meta:
         model = Snapshot
-        fields = ['id', 'project', 'name', 'date', 'instance_count', 'created_at']
+        fields = [
+            'id', 'project', 'name', 'date', 'instance_count',
+            'prototype', 'prototype_code', 'prototype_version', 'created_at',
+        ]
 
 
 class ProjectSnapshotSerializer(serializers.ModelSerializer):
